@@ -1,0 +1,89 @@
+<mvc:View controllerName="Billing.Billing.controller.OrderList" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Orders" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Center">
+                        <Label text="Id" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Order Date" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Contact No." />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Name" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="GST Number" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Amount" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Vouchers" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Total amount" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation" press='onPressNav'>
+                        <cells>
+                            <Text text="{order_id}" />
+                            <Text text="{order_date}" />
+                            <Text text="{contact_number}" />
+                            <Text text="{name}" />
+                            <Text text="{gst_number}" />
+                            <Text text="{total_amount}" />
+                            <Link
+                                enabled="{= ${vouchers} > 0 ? true : false }"
+                                textAlign="Center"
+                                text="{vouchers}"
+                                press="handleLinkPress" />
+                            <Text text="{total_combined_amount}" />
+                            <HBox>
+                                <Button enabled="{= ${vouchers} > 1 ? false : true }"
+                                    icon="sap-icon://print"
+                                    press="onPressPrint" tooltip="Print" />
+                                <!-- <Button class='sapUiSmallMarginBegin' icon="sap-icon://receipt"
+                                    press="onPressEdit" tooltip="Invoice" /> -->
+                                <Button class='sapUiSmallMarginBegin'
+                                    icon="sap-icon://loan"
+                                    press="onPressDeposit" tooltip="Deposit" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

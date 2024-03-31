@@ -1,0 +1,145 @@
+<mvc:View controllerName="Billing.Billing.controller.Main" xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core" displayBlock="true"
+	xmlns="sap.m">
+	<Page id="page" title="{i18n>title}" titleAlignment="Center">
+		<content>
+			<HBox alignItems='Center' justifyContent="End">
+				<Title text="Gold Rate: " class="sapUiMediumMarginEnd" />
+				<Input id="goldRate" value="{/gold_rate}" />
+				<Button icon="sap-icon://save" tooltip="Save" press="onSave" />
+			</HBox>
+			<Panel width="auto" class="sapUiResponsiveMargin" accessibleRole="Region">
+				<headerToolbar>
+					<OverflowToolbar>
+						<Title text="Billing" />
+					</OverflowToolbar>
+				</headerToolbar>
+				<content>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Invoice" subheader="Print"
+						press="onPressBuyer">
+						<TileContent>
+							<ImageContent src="sap-icon://receipt" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Purchase" subheader="Master data"
+						press="onPressPurchase">
+						<TileContent>
+							<ImageContent src="sap-icon://business-objects-mobile" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Order" subheader="Master data"
+						press="onPressOrder">
+						<TileContent>
+							<ImageContent src="sap-icon://business-objects-mobile" />
+						</TileContent>
+					</GenericTile>
+
+				</content>
+			</Panel>
+			<Panel width="auto" class="sapUiResponsiveMargin" accessibleRole="Region">
+				<headerToolbar>
+					<OverflowToolbar>
+						<Title text="Master Data" />
+					</OverflowToolbar>
+				</headerToolbar>
+				<content>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Stock" subheader="Create and Edit"
+						press="onPressStock">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Ornament" subheader="Create and Edit"
+						press="onPressOrnament">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Ornament Type" subheader="Create and Edit"
+						press="onPressOrnamentType">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Purity" subheader="Create and Edit"
+						press="onPressPurity">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Identification" subheader="Create and Edit"
+						press="onPressIdentification">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="GST" subheader="Create and Edit"
+						press="onPressGST">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="State Code" subheader="Create and Edit"
+						press="onPressState">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="HSN" subheader="Create and Edit"
+						press="onPressHSN">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="HM Charge" subheader="Create and Edit"
+						press="onPressHM">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+					<GenericTile
+						class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout"
+						header="Customers" subheader="Create and Edit"
+						press="onPressCustomer">
+						<TileContent>
+							<ImageContent src="sap-icon://multiselect-none" />
+						</TileContent>
+					</GenericTile>
+				</content>
+			</Panel>
+
+		</content>
+		<footer>
+			<OverflowToolbar>
+				<HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+					width="100%">
+					<Text text=" A RuDe Labs Production © 2024" />
+				</HBox>
+			</OverflowToolbar>
+		</footer>
+	</Page>
+</mvc:View>

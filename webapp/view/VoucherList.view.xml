@@ -1,0 +1,62 @@
+<mvc:View controllerName="Billing.Billing.controller.VoucherList" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Voucher" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button icon="sap-icon://print"
+                                press="onPressPrintAll" tooltip="Print" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Center">
+                        <Label text="Id" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Voucher Date" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Gold Rate" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Amount" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{id}" />
+                            <Text text="{voucher_date}" />
+                            <Text text="{rate}" />
+                            <Text text="{amount}" />
+                            <Button icon="sap-icon://print"
+                                press="onPressPrint" tooltip="Print" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

@@ -1,0 +1,83 @@
+<mvc:View controllerName="Billing.Billing.controller.InvoiceList" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Invoices" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Left">
+                        <Label text="Id" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Invoice Date" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Contact No." />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Name" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="GST Number" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Status" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation"
+                        highlight="{path: 'due',
+                    formatter: '.dueStatusHighlight'}">
+                        <cells>
+                            <Text text="{invoice_id}" />
+                            <Text text="{invoice_date}" />
+                            <Text text="{contact_number}" />
+                            <Text text="{customer_name}" />
+                            <Text text="{gst_number}" />
+                            <ObjectStatus
+                                active="{= ${vouchers} > 0 ? true : false }"
+                                text="{path: 'due',
+                                    formatter: '.dueStatusText'}"
+                                state="{path: 'due',
+                                    formatter: '.dueStatus'}"
+                                press="handleLinkPress" />
+                            <HBox>
+                                <Button icon="sap-icon://print"
+                                    press="onPressPrint" />
+                                <Button class='sapUiSmallMarginBegin'
+                                    enabled="{= ${due} > 0 ? true : false }"
+                                    icon="sap-icon://loan"
+                                    press="onPressDeposit" tooltip="Deposit" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

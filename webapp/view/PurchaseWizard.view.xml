@@ -1,0 +1,581 @@
+<mvc:View
+    height="100%"
+    controllerName="Billing.Billing.controller.PurchaseWizard"
+    xmlns:layout="sap.ui.layout"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <NavContainer id="wizardNavContainer">
+        <pages>
+            <Page
+                id="wizardContentPage"
+                title="{i18n>title}: PURCHASE" titleAlignment="Center"
+                showNavButton="true"
+                navButtonPress="onpressBack">
+                <content>
+                    <Wizard id="ShoppingCartWizard"
+                        complete="completedHandler"
+                        finishButtonText="Submit"
+                        enableBranching="true"
+                        class="sapUiResponsivePadding--header sapUiResponsivePadding--content">
+
+                        <WizardStep
+                            id="PurchaseStep"
+                            title="Create Purchase"
+                            subsequentSteps="createOrderStep, createInvoiceStep, DeliveryTypeStep"
+                            complete="goToPaymentStep"
+                            activate="checkValidStep"
+                            icon="sap-icon://money-bills">
+                            <VBox class="sapUiSmallMargin">
+                                <form:SimpleForm id="SimpleFormChangeColumn_oneGroup234"
+                                    editable="true"
+                                    layout="ColumnLayout"
+                                    title="Purchase Detail"
+                                    columnsM="2"
+                                    columnsL="3"
+                                    columnsXL="3"
+                                >
+                                    <form:toolbar>
+                                        <Toolbar id="TB1">
+                                            <Title id="Title1" text="Purchase Details" />
+                                            <ToolbarSpacer />
+                                            <Label text="Memo Number" />
+                                            <Input id="order_id" width="100px"
+                                                value="{/memo_number}"
+                                                editable="false" />
+                                            <DatePicker
+                                                id="invoice_date"
+                                                width="200px"
+                                                placeholder="Enter Date"
+                                                change="handleChange"
+                                                dateValue="{/currentDate}" />
+                                        </Toolbar>
+                                    </form:toolbar>
+                                    <form:content>
+                                        <Label text="Contact No." />
+                                        <Input id="contact" value="{buyer>/contact_number}"
+                                            submit="onContactNumber" />
+                                        <Label text="Name" />
+                                        <Input id="name" value="{buyer>/name}" />
+                                        <Label text="Address" />
+                                        <Input id="address" value="{buyer>/address}" />
+                                        <Label text="Id Type" />
+                                        <Select id="id_type"
+                                            selectedKey="{buyer>/id_type}"
+                                            items="{
+                                            path: 'idModel>/results'
+                                        }"
+                                            forceSelection="false">
+                                            <core:Item key="{idModel>item}" text="{idModel>item}" />
+                                            <layoutData>
+                                                <form:ColumnElementData cellsSmall="5"
+                                                    cellsLarge="5" />
+                                            </layoutData>
+                                        </Select>
+                                        <Input value="{buyer>/id_value}">
+
+                                        </Input>
+                                        <Label text="State" />
+                                        <Select id="State" selectedKey="{buyer>/state_code}"
+                                            items="{
+                                            path: 'stateModel>/results'
+                                        }"
+                                            forceSelection="false">
+                                            <core:Item key="{stateModel>id}"
+                                                text="{stateModel>item}" />
+                                        </Select>
+
+                                        <Label text="Pincode" />
+                                        <Input value="{buyer>/pincode}" />
+                                        <Label text="GST" />
+                                        <Input value="{buyer>/gst_number}" />
+
+                                    </form:content>
+                                </form:SimpleForm>
+
+                            </VBox>
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween">
+                                <VBox>
+                                    <Label text="Type of Ornament" />
+                                    <Select id="om_type"
+                                        width="200px"
+                                        items="{
+                            path: 'omtypeModel>/results'
+                        }"
+                                        forceSelection="false">
+                                        <core:Item key="{omtypeModel>id}" text="{omtypeModel>item}" />
+                                    </Select>
+                                </VBox>
+
+                                <VBox>
+                                    <Label text="Purity" />
+                                    <Select id="purity"
+                                        width="200px"
+                                        items="{
+                                path: 'purityModel>/results'
+                            }"
+                                        forceSelection="false">
+                                        <core:Item key="{purityModel>item}"
+                                            text="{purityModel>item}" />
+                                    </Select>
+                                </VBox>
+                                <VBox>
+                                    <Label text="Rate/Gm." />
+                                    <Input width="200px" id="rate" submit="calValue" />
+                                </VBox>
+                                <VBox>
+                                    <Label text="Salesman" />
+
+                                    <Select id="salesman"
+                                        width="200px"
+                                        items="{
+                                path: 'salesModel>/results'
+                            }"
+                                        forceSelection="false">
+                                        <core:Item key="{salesModel>id}"
+                                            text="{salesModel>user_name}" />
+                                    </Select>
+                                </VBox>
+                            </HBox>
+
+                            <Table id="idTableProduct" sticky="ColumnHeaders"
+                                class="sapUiSizeCompact"
+                                items="{Products>/results}">
+                                <headerToolbar>
+                                    <OverflowToolbar>
+                                        <content>
+                                            <Title id="tableHeader" text="" level="H2" />
+                                            <ToolbarSpacer />
+                                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                                        </content>
+                                    </OverflowToolbar>
+                                </headerToolbar>
+                                <columns>
+                                    <Column hAlign="Left">
+                                        <Label text="Description" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Pcs" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Gross" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Net" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Amount" />
+                                    </Column>
+                                    <Column hAlign="Left" width="50px">
+                                        <Label text="" />
+                                    </Column>
+
+                                </columns>
+                                <items>
+                                    <ColumnListItem>
+                                        <cells>
+                                            <Input showSuggestion="true" value="{Products>orm_desc}"
+                                                suggestionItemSelected="onSelected"
+                                                suggest=".onSuggest"
+                                                suggestionItems="{stocksModel>/results}">
+                                                <suggestionItems>
+                                                    <core:Item text="{stocksModel>orm_desc}" />
+                                                </suggestionItems>
+                                            </Input>
+                                            <Input value="{Products>qty}" />
+                                            <Input value="{Products>gross_wt}" />
+                                            <Input value="{Products>net_wt}" submit="calValue" />
+                                            <Input value="{Products>amount}" />
+                                            <Button icon="sap-icon://delete" type="Reject"
+                                                press="onPressRemove" />
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween"
+                                direction="RowReverse">
+                                <VBox>
+
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Gross Total: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="amount"
+                                            class="p-10" />
+                                    </HBox>
+                                </VBox>
+                                <VBox>
+                                    <Title level="H1" text="Payment mode" />
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Cheque: " width="120px" />
+                                        <Input id="cheque" liveChange="checkValidStep" />
+                                        <Input id="chequeno" value="-" class="sapUiSmallMarginBegin"
+                                            placeholder="Cheque number" liveChange="checkValidStep" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Adj Order: " width="120px" />
+                                        <Input id="adjo" liveChange="adjustCheque" />
+                                        <Input id="adjonumber" class="sapUiSmallMarginBegin"
+                                            placeholder="order number" liveChange="checkValidStep" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Adj Purchase: " width="120px" />
+                                        <Input id="adjp" submit="getInvoiceNumber"
+                                            liveChange="adjustCheque" />
+                                        <Input id="adjpnumber" class="sapUiSmallMarginBegin"
+                                            placeholder="Invoice number" editable="false" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Cash: " width="120px" />
+                                        <Input id="cash"
+                                            liveChange="adjustCheque" />
+                                    </HBox>
+                                    <TextArea id="addt" rows="3" cols="35"
+                                        placeholder="Additional Notes"></TextArea>
+                                </VBox>
+
+                            </HBox>
+
+                        </WizardStep>
+                        <WizardStep
+                            id="createOrderStep"
+                            title="Create Order"
+                            subsequentSteps="createInvoiceStep, DeliveryTypeStep"
+                            complete="goToOrderStep"
+                            icon="sap-icon://credit-card">
+                            <OverflowToolbar>
+                                <Title text="Order Details" />
+                                <ToolbarSpacer />
+                                <Label text="Order Number" />
+                                <Input id="order_order_id" width="100px" value="" editable="false" />
+                                <Label id="order_voucher_id" text="" />
+                            </OverflowToolbar>
+
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween">
+                                <VBox>
+                                    <Label text="Type of Ornament" />
+                                    <Select id="order_om_type"
+                                        width="200px"
+                                        items="{
+                            path: 'omtypeModel>/results'
+                        }"
+                                        forceSelection="false">
+                                        <core:Item key="{omtypeModel>id}" text="{omtypeModel>item}" />
+                                    </Select>
+                                </VBox>
+
+                                <VBox>
+                                    <Label text="Purity" />
+                                    <Select id="order_purity"
+                                        width="200px"
+                                        items="{
+                                path: 'purityModel>/results'
+                            }"
+                                        forceSelection="false">
+                                        <core:Item key="{purityModel>item}"
+                                            text="{purityModel>item}" />
+                                    </Select>
+                                </VBox>
+                                <VBox>
+                                    <Label text="Rate/Gm." />
+                                    <Input width="200px" id="order_rate" value="{buyer>/rate}"
+                                        submit="calAddt" />
+                                </VBox>
+
+                            </HBox>
+
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween"
+                                direction="RowReverse">
+                                <VBox>
+                                    <HBox id="order_oldgoldBox" alignItems="Center">
+                                        <Title level="h1" text="Old Gold Adj: "
+                                            width="150px" />
+                                        <Input editable="false" value="0" width="100px"
+                                            textAlign="Right"
+                                            id="order_oldgold" class='fs-1' />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Advance Amount: " width="150px" />
+                                        <Input value="0" width="100px" textAlign="Right"
+                                            liveChange="calVal"
+                                            id="order_amount" class='fs-1' />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Total Amount: " width="150px" />
+                                        <Title level="h1" id="order_totamount" text="" width="100px" />
+                                    </HBox>
+                                </VBox>
+                                <VBox>
+                                    <Title level="h1" text="Payment mode" />
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Cash: " width="120px" />
+                                        <Input id="order_cash" liveChange="clearAll" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Card: " width="120px" />
+                                        <Input id="order_card" liveChange="adjustBal" />
+                                        <Input id="order_apprcode" class="sapUiSmallMarginBegin"
+                                            placeholder="Approval code" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Cheque: " width="120px" />
+                                        <Input id="order_cheque" liveChange="adjustBal" />
+                                        <Input id="order_chequeno" class="sapUiSmallMarginBegin"
+                                            placeholder="Cheque number" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="UPI: " width="120px" />
+                                        <Input id="order_upi" liveChange="adjustBal" />
+                                        <Input id="order_upidetails" class="sapUiSmallMarginBegin"
+                                            placeholder="UPI id" />
+                                    </HBox>
+
+                                    <HBox alignItems="Center">
+                                        <Title level="h1" text="Bank Transfer: " width="120px" />
+                                        <Input id="order_bank" liveChange="adjustBal" />
+                                        <Input id="order_bankdetails" class="sapUiSmallMarginBegin"
+                                            placeholder="Details" />
+                                    </HBox>
+                                    <TextArea id="order_addt" rows="3" cols="35"
+                                        placeholder="Additional Notes"></TextArea>
+                                </VBox>
+
+                            </HBox>
+                        </WizardStep>
+                        <WizardStep
+                            id="createInvoiceStep"
+                            title="Create Invoice"
+                            nextStep="DeliveryTypeStep"
+                            icon="sap-icon://official-service">
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween">
+                                <VBox>
+                                    <Label text="Type of Ornament" />
+                                    <Select id="invoice_om_type"
+                                        width="200px"
+                                        change="getHM"
+                                        items="{
+                            path: 'omtypeModel>/results'
+                        }"
+                                        forceSelection="false">
+                                        <core:Item key="{omtypeModel>id}" text="{omtypeModel>item}" />
+                                    </Select>
+                                </VBox>
+
+                                <VBox>
+                                    <Label text="Purity" />
+                                    <Select id="invoice_purity"
+                                        width="200px"
+                                        items="{
+                                path: 'purityModel>/results'
+                            }"
+                                        forceSelection="false">
+                                        <core:Item key="{purityModel>item}"
+                                            text="{purityModel>item}" />
+                                    </Select>
+                                </VBox>
+                                <VBox>
+                                    <Label text="Rate/Gm." />
+                                    <Input width="200px" id="invoice_rate" submit="calValueInvoice" />
+                                </VBox>
+                            </HBox>
+
+                            <Table id="idTableInvoice" sticky="ColumnHeaders"
+                                class="sapUiSizeCompact"
+                                items="{InvoiceModel>/results}">
+                                <headerToolbar>
+                                    <OverflowToolbar>
+                                        <content>
+                                            <Title id="invoiceTableHeader" text="" level="H2" />
+                                            <ToolbarSpacer />
+                                            <Button text='Add +' type='Emphasized'
+                                                press="onAddInvoice" />
+                                        </content>
+                                    </OverflowToolbar>
+                                </headerToolbar>
+                                <columns>
+                                    <Column hAlign="Left">
+                                        <Label text="Code" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Description" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Pcs" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Gross" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Net" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Value" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Making" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="St. wt" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="St. val" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="HM Charge" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="Amount" />
+                                    </Column>
+                                    <Column hAlign="Left">
+                                        <Label text="HUID" />
+                                    </Column>
+                                    <Column hAlign="Left" width="50px">
+                                        <Label text="" />
+                                    </Column>
+
+                                </columns>
+                                <items>
+                                    <ColumnListItem>
+                                        <cells>
+                                            <Input value="{InvoiceModel>om_code}"
+                                                submit='onInputCode' />
+                                            <Input value="{InvoiceModel>orm_desc}" />
+                                            <Input value="{InvoiceModel>qty}" />
+                                            <Input value="{InvoiceModel>gross_wt}" />
+                                            <Input value="{InvoiceModel>net_wt}"
+                                                submit="calValueInvoice" />
+                                            <Input value="{InvoiceModel>value}" editable="false" />
+                                            <Input value="{InvoiceModel>making}"
+                                                submit="calValueInvoice" />
+                                            <Input value="{InvoiceModel>stone_wt}" />
+                                            <Input value="{InvoiceModel>st_val}" />
+                                            <Input value="{InvoiceModel>hmcharge}"
+                                                submit="calValueInvoice" />
+                                            <Input value="{InvoiceModel>amount}" />
+                                            <Input value="{InvoiceModel>huid}" submit="onAddInvoice" />
+                                            <Button icon="sap-icon://delete" type="Reject"
+                                                press="onPressRemoveInvoice" />
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween"
+                                direction="RowReverse">
+                                <VBox>
+
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Taxable Amount: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_taxamount"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="CGST {gstModel>/cgst} %: "
+                                            width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_cgst"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="SGST {gstModel>/sgst} %: "
+                                            width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_sgst"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Amount after tax: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_taxafamount"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Non Taxable Item: " width="150px" />
+                                        <Input liveChange="calAddtInvoice" value="0" width="100px"
+                                            textAlign="Right"
+                                            id="invoice_nontax" class='fs-1' />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Advance less " width="150px" />
+                                        <Input width="100px" textAlign="Right" id="invoice_adv"
+                                            liveChange="calAddtInvoice"
+                                            class='fs-1' editable="false" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Discount: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_discount"
+                                            class="p-10" />
+                                    </HBox>
+
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Gross Total: " width="150px" />
+                                        <Input liveChange="changeAmountInvoice" value="0"
+                                            width="100px"
+                                            textAlign="Right"
+                                            id="invoice_amount" class='fs-1' />
+                                    </HBox>
+                                    <!-- <HBox alignItems="Center">
+                                        <Title level="H1" text="Round Ofform: " width="120px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right" id="invoice_round" />
+                                    </HBox> -->
+                                </VBox>
+                                <VBox>
+                                    <Title level="H1" text="Payment mode" />
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Cash: " width="120px" />
+                                        <Input id="invoice_cash" liveChange="calDueInvoice" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Card: " width="120px" />
+                                        <Input id="invoice_card" liveChange="calDueInvoice" />
+                                        <Input id="invoice_apprcode" class="sapUiSmallMarginBegin"
+                                            placeholder="Approval code" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Cheque: " width="120px" />
+                                        <Input id="invoice_cheque" liveChange="calDueInvoice" />
+                                        <Input id="invoice_chequeno" class="sapUiSmallMarginBegin"
+                                            placeholder="Cheque number" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="UPI: " width="120px" />
+                                        <Input id="invoice_upi" liveChange="calDueInvoice" />
+                                        <Input id="invoice_upidetails" class="sapUiSmallMarginBegin"
+                                            placeholder="UPI id" />
+                                    </HBox>
+
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Bank Transfer: " width="120px" />
+                                        <Input id="invoice_bank" liveChange="calDueInvoice" />
+                                        <Input id="invoice_bankdetails"
+                                            class="sapUiSmallMarginBegin"
+                                            placeholder="Details" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Due: " width="120px" />
+                                        <Input id="invoice_due" />
+                                    </HBox>
+                                    <TextArea id="invoice_addt" rows="3" cols="35"
+                                        placeholder="Additional Notes"></TextArea>
+                                </VBox>
+
+                            </HBox>
+                        </WizardStep>
+                        <WizardStep
+                            id="DeliveryTypeStep"
+                            title="Save and Submit"
+                            icon="sap-icon://insurance-car">
+                        </WizardStep>
+                    </Wizard>
+                </content>
+                <footer>
+                    <OverflowToolbar>
+                        <ToolbarSpacer />
+                        <Button text="Cancel" press="handleWizardCancel" />
+                    </OverflowToolbar>
+                </footer>
+            </Page>
+        </pages>
+    </NavContainer>
+</mvc:View>

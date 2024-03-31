@@ -1,0 +1,71 @@
+<mvc:View controllerName="Billing.Billing.controller.PurchaseList" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Purchase List" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Left">
+                        <Label text="Id" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Purchase Date" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Contact No." />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Name" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="GST Number" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Amount" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation">
+                        <cells>
+                            <Text text="{id}" />
+                            <Text text="{purchase_date}" />
+                            <Text text="{contact_number}" />
+                            <Text text="{customer_name}" />
+                            <Text text="{gst_number}" />
+                            <Text text="{total_amount}" />
+                            <HBox>
+                                <Button icon="sap-icon://print"
+                                    press="onPressPrint" tooltip="Print" />
+                            </HBox>
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

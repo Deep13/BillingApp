@@ -1,0 +1,94 @@
+<mvc:View controllerName="Billing.Billing.controller.Stock" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Stock" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Left">
+                        <Label text="Id" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Entry Date" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Om Type" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Description" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Om Code" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Purity" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Gross Wt" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Net Wt" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Stone Wt" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Qty" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="HUID" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem
+                        highlight="{path: 'sold',
+                    formatter: '.soldStatusHighlight'}">
+                        <cells>
+                            <Text text="{id}" />
+                            <Text text="{entry_date}" />
+                            <Text text="{om_type}" />
+                            <Text text="{orm_desc}" />
+                            <Text text="{om_code}" />
+                            <Text text="{purity}" />
+                            <Text text="{gross_wt}" />
+                            <Text text="{net_wt}" />
+                            <Text text="{stone_wt}" />
+                            <Text text="{qty}" />
+                            <Text text="{huid}" />
+                            <Button
+                                enabled="{path: 'sold',
+                    formatter: '.soldButton'}"
+                                icon="sap-icon://edit" type="Emphasized"
+                                press="onPressEdit" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

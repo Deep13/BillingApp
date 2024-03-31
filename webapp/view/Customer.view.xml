@@ -1,0 +1,78 @@
+<mvc:View controllerName="Billing.Billing.controller.Customer" xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core" displayBlock="true"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}: Customer" titleAlignment="Center" showNavButton="true"
+        navButtonPress="onpressBack">
+        <content>
+
+            <Table id="idTable" sticky="ColumnHeaders"
+                growing="true" growingThreshold="20"
+                items="{/results}">
+                <headerToolbar>
+                    <OverflowToolbar>
+                        <content>
+                            <Title id="tableHeader" text="" level="H2" />
+                            <ToolbarSpacer />
+                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                        </content>
+                    </OverflowToolbar>
+                </headerToolbar>
+                <columns>
+                    <Column hAlign="Left">
+                        <Label text="Contact Number" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Address" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Name" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Id Type" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Id value" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="GST Number" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="State" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="Pincode" />
+                    </Column>
+                    <Column hAlign="Left">
+                        <Label text="" />
+                    </Column>
+
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{contact_number}" />
+                            <Text text="{address}" />
+                            <Text text="{name}" />
+                            <Text text="{id_type}" />
+                            <Text text="{id_value}" />
+                            <Text text="{gst_number}" />
+                            <Text text="{state}" />
+                            <Text text="{pincode}" />
+                            <Button icon="sap-icon://edit" type="Emphasized"
+                                press="onPressEdit" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+        </content>
+        <footer>
+            <OverflowToolbar>
+                <HBox alignItems="Center" alignContent="Center" justifyContent="Center"
+                    width="100%">
+                    <Text text=" A RuDe Labs Production © 2024" />
+                </HBox>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

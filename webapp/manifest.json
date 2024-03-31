@@ -1,0 +1,294 @@
+{
+  "_version": "1.12.0",
+  "sap.app": {
+    "id": "Billing.Billing",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "1.0.0"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "sourceTemplate": {
+      "id": "ui5template.basicSAPUI5ApplicationProject",
+      "version": "1.40.12"
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": false,
+    "rootView": {
+      "viewName": "Billing.Billing.view.Login",
+      "type": "XML",
+      "async": true,
+      "id": "Login"
+    },
+    "dependencies": {
+      "minUI5Version": "1.65.6",
+      "libs": {
+        "sap.ui.layout": {},
+        "sap.ui.core": {},
+        "sap.m": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "Billing.Billing.i18n.i18n"
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "viewType": "XML",
+        "async": true,
+        "viewPath": "Billing.Billing.view",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "clearControlAggregation": false
+      },
+      "routes": [
+        {
+          "name": "",
+          "pattern": "Login",
+          "target": "Login"
+        },
+        {
+          "name": "Main",
+          "pattern": "Main",
+          "target": "Main"
+        },
+        {
+          "name": "Ornament",
+          "pattern": "Ornament",
+          "target": "Ornament"
+        },
+        {
+          "name": "OrnamentType",
+          "pattern": "OrnamentType",
+          "target": "OrnamentType"
+        },
+        {
+          "name": "Purity",
+          "pattern": "Purity",
+          "target": "Purity"
+        },
+        {
+          "name": "Identification",
+          "pattern": "Identification",
+          "target": "Identification"
+        },
+        {
+          "name": "GST",
+          "pattern": "GST",
+          "target": "GST"
+        },
+        {
+          "name": "State",
+          "pattern": "State",
+          "target": "State"
+        },
+        {
+          "name": "HSN",
+          "pattern": "HSN",
+          "target": "HSN"
+        },
+        {
+          "name": "HM",
+          "pattern": "HM",
+          "target": "HM"
+        },
+        {
+          "name": "Stock",
+          "pattern": "Stock",
+          "target": "Stock"
+        },
+        {
+          "name": "Customer",
+          "pattern": "Customer",
+          "target": "Customer"
+        },
+        {
+          "name": "Buyer",
+          "pattern": "Buyer",
+          "target": "Buyer"
+        },
+        {
+          "name": "Order",
+          "pattern": "Order/{purchase_id}",
+          "target": "Order"
+        },
+        {
+          "name": "InvoiceList",
+          "pattern": "InvoiceList",
+          "target": "InvoiceList"
+        },
+        {
+          "name": "OrderList",
+          "pattern": "OrderList",
+          "target": "OrderList"
+        },
+        {
+          "name": "Purchase",
+          "pattern": "Purchase",
+          "target": "Purchase"
+        },
+        {
+          "name": "PurchaseList",
+          "pattern": "PurchaseList",
+          "target": "PurchaseList"
+        },
+        {
+          "name": "OrderView",
+          "pattern": "OrderView/{order_id}",
+          "target": "OrderView"
+        },
+        {
+          "name": "VoucherList",
+          "pattern": "VoucherList/{order_id}",
+          "target": "VoucherList"
+        },
+        {
+          "name": "PurchaseWizard",
+          "pattern": "PurchaseWizard",
+          "target": "PurchaseWizard"
+        }
+      ],
+      "targets": {
+        "Login": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Login"
+        },
+        "Purchase": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Purchase"
+        },
+        "PurchaseWizard": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "PurchaseWizard"
+        },
+        "VoucherList": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "VoucherList"
+        },
+        "OrderView": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "OrderView"
+        },
+        "PurchaseList": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "PurchaseList"
+        },
+        "OrderList": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "OrderList"
+        },
+        "Main": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Main"
+        },
+        "Ornament": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Ornament"
+        },
+        "Purity": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Purity"
+        },
+        "Order": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Order"
+        },
+        "InvoiceList": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "InvoiceList"
+        },
+        "Buyer": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Buyer"
+        },
+        "Customer": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Customer"
+        },
+        "Stock": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Stock"
+        },
+        "HM": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "HM"
+        },
+        "HSN": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "HSN"
+        },
+        "State": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "State"
+        },
+        "GST": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "GST"
+        },
+        "Identification": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Identification"
+        },
+        "OrnamentType": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "OrnamentType"
+        }
+      }
+    }
+  }
+}
