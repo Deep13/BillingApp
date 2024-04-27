@@ -42,6 +42,7 @@
                         <Input id="address" value="{buyer>/address}" />
                         <Label text="Id Type" />
                         <Select id="id_type"
+                            change="changeID"
                             selectedKey="{buyer>/id_type}"
                             items="{
                             path: 'idModel>/results'
@@ -52,7 +53,7 @@
                                 <f:ColumnElementData cellsSmall="5" cellsLarge="5" />
                             </layoutData>
                         </Select>
-                        <Input value="{buyer>/id_value}">
+                        <Input id="id_val" value="{buyer>/id_value}">
 
                         </Input>
                         <Label text="State" />
@@ -122,11 +123,11 @@
                         <Input value="0" width="100px" textAlign="Right"
                             id="oldgold" class='fs-1' liveChange="calVal" />
                     </HBox>
-                    <HBox alignItems="Center">
+                    <!-- <HBox alignItems="Center" visible="false">
                         <Title level="h1" text="Advance Amount: " width="150px" />
                         <Input value="0" width="100px" textAlign="Right" liveChange="calVal"
                             id="amount" class='fs-1' />
-                    </HBox>
+                    </HBox> -->
                     <HBox alignItems="Center">
                         <Title level="h1" text="Total Amount: " width="150px" />
                         <Title level="h1" id="totamount" text="" width="100px" />
@@ -136,30 +137,30 @@
                     <Title level="h1" text="Payment mode" />
                     <HBox alignItems="Center">
                         <Title level="h1" text="Cash: " width="120px" />
-                        <Input id="cash" liveChange="clearAll" />
+                        <Input id="cash" liveChange="calVal" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="h1" text="Card: " width="120px" />
-                        <Input id="card" liveChange="adjustBal" />
+                        <Input id="card" liveChange="calVal" />
                         <Input id="apprcode" class="sapUiSmallMarginBegin"
                             placeholder="Approval code" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="h1" text="Cheque: " width="120px" />
-                        <Input id="cheque" liveChange="adjustBal" />
+                        <Input id="cheque" liveChange="calVal" />
                         <Input id="chequeno" class="sapUiSmallMarginBegin"
                             placeholder="Cheque number" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="h1" text="UPI: " width="120px" />
-                        <Input id="upi" liveChange="adjustBal" />
+                        <Input id="upi" liveChange="calVal" />
                         <Input id="upidetails" class="sapUiSmallMarginBegin"
                             placeholder="UPI id" />
                     </HBox>
 
                     <HBox alignItems="Center">
                         <Title level="h1" text="Bank Transfer: " width="120px" />
-                        <Input id="bank" liveChange="adjustBal" />
+                        <Input id="bank" liveChange="calVal" />
                         <Input id="bankdetails" class="sapUiSmallMarginBegin"
                             placeholder="Details" />
                     </HBox>

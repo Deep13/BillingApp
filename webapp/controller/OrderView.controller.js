@@ -267,7 +267,9 @@ sap.ui.define(
             },
 
             onpressBack: function (oEvent) {
-                this.oRouter.navTo("OrderList");
+                this.oRouter.navTo("OrderList", {
+                    order_id: "null"
+                });
             },
 
         });

@@ -36,6 +36,28 @@ sap.ui.define(
             console.log('Error')
           }
         });
+
+        $.ajax({
+          url: host,
+          type: "POST",
+          data: {
+            method: "getIdHalueHelp",
+          },
+          success: function (dataClient) {
+            try {
+              var aData = JSON.parse(dataClient);
+              var jData = new sap.ui.model.json.JSONModel({ results: aData });
+              that.getView().setModel(jData, "SearchValueHelp");
+              // that.goldRate = aData.gold_rate;
+            }
+            catch (e) {
+              alert("Something went wrong", e)
+            }
+          },
+          error: function (request, error) {
+            console.log('Error')
+          }
+        });
       },
       onSave: function () {
         var that = this;
@@ -55,6 +77,7 @@ sap.ui.define(
               try {
                 that.getView().getModel().setProperty("/gold_rate", rate);
                 that.getOwnerComponent().getModel("SellerModel").setProperty("/gold_rate", rate);
+                localStorage.setItem("gold_rate", rate);
                 // that.goldRate = aData.gold_rate;
               }
               catch (e) {
@@ -98,15 +121,39 @@ sap.ui.define(
         this.oRouter.navTo("Customer");
       },
       onPressBuyer: function (oEvent) {
-        this.oRouter.navTo("InvoiceList");
+        this.oRouter.navTo("InvoiceList", {
+          invoice_id: "null"
+        });
       },
       onPressOrder: function () {
-        this.oRouter.navTo("OrderList");
+        this.oRouter.navTo("OrderList", {
+          order_id: "null"
+        });
       },
       onPressPurchase: function () {
-        this.oRouter.navTo("PurchaseList");
+        this.oRouter.navTo("PurchaseList", {
+          purchase_id: "null"
+        });
       },
-
+      gotToPage: function (oEvent) {
+        console.log(oEvent);
+        var selected = oEvent.getParameter("selectedRow").getBindingContext("SearchValueHelp").getObject();
+        if (selected.type == "Orders") {
+          this.oRouter.navTo("OrderList", {
+            order_id: selected.id
+          });
+        }
+        else if (selected.type == "Invoices") {
+          this.oRouter.navTo("InvoiceList", {
+            invoice_id: selected.id
+          });
+        }
+        else if (selected.type == "Purchase") {
+          this.oRouter.navTo("PurchaseList", {
+            purchase_id: selected.id
+          });
+        }
+      }
 
 
 

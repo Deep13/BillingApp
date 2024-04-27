@@ -83,16 +83,8 @@
             <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween">
                 <VBox>
                     <Label text="Type of Ornament" />
-                    <Select id="om_type"
-                        enabled="false"
-                        selectedKey="{orderModel>/type}"
-                        width="200px"
-                        items="{
-            path: 'omtypeModel>/results'
-        }"
-                        forceSelection="false">
-                        <core:Item key="{omtypeModel>id}" text="{omtypeModel>item}" />
-                    </Select>
+                    <Input editable="false" width="200px" value="{orderModel>/type}" />
+
                 </VBox>
 
                 <VBox>

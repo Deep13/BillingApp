@@ -32,6 +32,7 @@ sap.ui.define(
             },
             _handleRouteMatched: function () {
                 var data = this.getUserLog();
+                this.grandTotal = 0;
                 var that = this;
                 var host = this.getHost();
                 if (!data) {
@@ -54,6 +55,7 @@ sap.ui.define(
                         success: function (dataClient) {
                             try {
                                 var aDataId = JSON.parse(dataClient);
+                                aDataId.push({ id: '0', item: 'N/A' })
                                 var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
                                 that.getView().setModel(jModelID, "idModel")
                             }
@@ -200,7 +202,7 @@ sap.ui.define(
 
             getHM: function (oEvent) {
                 var selected = this.getView().byId("om_type").getSelectedKey();
-                var ahm = this.hmData.filter(val => val.om_id == selected);
+                var ahm = this.hmData.filter(val => val.om_type == selected);
                 if (ahm && ahm.length > 0) {
                     this.selectedHM = ahm[0].item;
                     var products = this.getView().getModel("Products").getProperty("/results");
@@ -214,7 +216,16 @@ sap.ui.define(
                     this.selectedHM = 0;
                 }
             },
-
+            changeID: function (oEvent) {
+                this.getView().byId("id_val").setValue("");
+                var selected = oEvent.getParameter("selectedItem").getKey();
+                if (selected == "N/A") {
+                    this.getView().byId("id_val").setEnabled(false);
+                }
+                else {
+                    this.getView().byId("id_val").setEnabled(true);
+                }
+            },
 
             onContactNumber: function () {
                 var that = this;
@@ -304,6 +315,9 @@ sap.ui.define(
                     value.amount = (parseFloat(value.net_wt) * rate) + parseFloat(value.making ? value.making : 0) + parseFloat(value.hmcharge ? value.hmcharge : 0);
                 });
                 this.getView().getModel("Products").refresh(true);
+                this.getView().byId("discount").setText(0);
+                this.getView().byId("roundoff").setText(0);
+                this.grandTotal = 0;
                 this.calAddt();
             },
             calAddt: function () {
@@ -314,12 +328,14 @@ sap.ui.define(
                 if (!adv) {
                     adv = 0
                 }
+                else {
+                    adv = parseFloat(adv)
+                }
                 products.map(value => {
                     totalVal += parseFloat(value.amount);
                 });
                 if (totalVal && totalVal > 0) {
-                    var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
-                    gst = parseFloat(gst);
+
                     var nontax = this.getView().byId("nontax").getValue();
                     if (!nontax) {
                         nontax = 0
@@ -327,12 +343,36 @@ sap.ui.define(
                     else {
                         nontax = parseFloat(nontax)
                     }
-                    this.getView().byId("taxamount").setText(totalVal);
+                    var discount = this.getView().byId("discount").getText();
+                    if (!discount) {
+                        discount = 0
+                    }
+                    else {
+                        discount = parseFloat(discount)
+                    }
+                    this.getView().byId("totamount").setText(totalVal);
+                    this.getView().byId("discount").setText(discount);
+                    this.getView().byId("taxamount").setText(totalVal - (adv + discount));
+                    var taxamount = totalVal - (adv + discount);
+                    var gst = (taxamount * (parseFloat(gstM.cgst) / 100)).toFixed(2);
+                    gst = parseFloat(gst);
                     this.getView().byId("cgst").setText(gst);
                     this.getView().byId("sgst").setText(gst);
-                    this.getView().byId("taxafamount").setText(gst + gst + totalVal);
-                    this.getView().byId("amount").setValue((gst + gst + nontax + totalVal - adv).toFixed(2));
-                    this.getView().byId("cash").setValue((gst + gst + nontax + totalVal - adv).toFixed(2));
+                    var taxafamount = gst + gst + (totalVal - (adv + discount));
+                    this.getView().byId("taxafamount").setText(taxafamount);
+                    var totalAmount = nontax + taxafamount;
+                    if (this.grandTotal > totalAmount) {
+                        var roundoff = this.grandTotal - totalAmount;
+                    }
+                    else {
+                        var roundoff = 0;
+                    }
+                    roundoff = roundoff.toFixed(2);
+                    roundoff = parseFloat(roundoff)
+                    this.getView().byId("roundoff").setText(roundoff);
+                    this.getView().byId("amount").setValue((totalAmount + roundoff).toFixed(2));
+                    this.grandTotal = (totalAmount + roundoff).toFixed(2);
+                    this.getView().byId("cash").setValue((totalAmount + roundoff).toFixed(2));
                 }
                 else {
                     this.getView().byId("taxamount").setText(0);
@@ -362,40 +402,39 @@ sap.ui.define(
             changeAmount: function () {
                 var amount = this.getView().byId("amount").getValue();
                 amount = parseFloat(amount);
-                var adv = this.getView().byId("adv").getValue();
-                var nontax = this.getView().byId("nontax").getValue();
-                if (!adv) {
-                    adv = 0
-                }
-                if (!nontax) {
-                    nontax = 0
-                }
-                else {
-                    nontax = parseFloat(nontax)
-                }
-                var products = this.getView().getModel("Products").getProperty("/results");
-                var gstM = this.getView().getModel("gstModel").getData();
-                var totalVal = 0;
-                products.map(value => {
-                    totalVal += parseFloat(value.amount);
-                });
-                var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
-                gst = parseFloat(gst);
-                totalVal = totalVal + gst + gst + nontax - adv;
-                if (totalVal && totalVal > 0 && totalVal > amount) {
-                    this.getView().byId("discount").setText((totalVal - amount).toFixed(2));
-                }
-                else {
-                    this.getView().byId("discount").setText(0)
-                }
+                // var adv = this.getView().byId("adv").getValue();
+                // var nontax = this.getView().byId("nontax").getValue();
+                // if (!adv) {
+                //     adv = 0
+                // }
+                // if (!nontax) {
+                //     nontax = 0
+                // }
+                // else {
+                //     nontax = parseFloat(nontax)
+                // }
+                // var products = this.getView().getModel("Products").getProperty("/results");
+                // var gstM = this.getView().getModel("gstModel").getData();
+                // var totalVal = 0;
+                // products.map(value => {
+                //     totalVal += parseFloat(value.amount);
+                // });
+                // var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
+                // gst = parseFloat(gst);
+                // totalVal = totalVal + gst + gst + nontax - adv;
+
+                var discount = this.grandTotal - amount;
+                this.getView().byId("discount").setText(discount);
+                this.grandTotal = amount;
+                this.calAddt();
                 this.onresetPayment();
             },
             addnontax: function () {
 
             },
             onresetPayment: function () {
-                var amount = this.getView().byId("amount").getValue();
-                this.getView().byId("cash").setValue(amount);
+                // var amount = this.getView().byId("amount").getValue();
+                // this.getView().byId("cash").setValue(amount);
                 this.getView().byId("cheque").setValue(0);
                 this.getView().byId("upi").setValue(0);
                 this.getView().byId("card").setValue(0);
@@ -458,6 +497,11 @@ sap.ui.define(
                 var taxamount = this.getView().byId("taxamount").getText();
                 var taxafamount = this.getView().byId("taxafamount").getText();
                 var adv = this.getView().byId("adv").getValue();
+                var order_id = this.getView().byId('order_id').getValue();
+                var order_date = '0000-00-00';
+                if (order_id && buyerDetails.order_date) {
+                    order_date = buyerDetails.order_date;
+                }
                 $.ajax({
                     url: host,
                     type: "POST",
@@ -495,7 +539,11 @@ sap.ui.define(
                             due: due,
                             taxamount: taxamount,
                             taxafamount: taxafamount,
-                            adv: adv
+                            adv: adv,
+                            order_id: order_id,
+                            order_date: order_date,
+                            old_gold_amount: 0,
+                            purchase_id: "",
                         }),
                     },
                     success: function (dataClient) {
@@ -558,7 +606,9 @@ sap.ui.define(
                                                         productDetails: productDetails,
                                                         taxamount: taxamount,
                                                         taxafamount: taxafamount,
-                                                        adv: adv
+                                                        adv: adv,
+                                                        order_id: order_id,
+                                                        order_date: order_date,
                                                     });
                                                 }
                                                 else if (sAction == "Print") {
@@ -596,7 +646,9 @@ sap.ui.define(
                                                         productDetails: productDetails,
                                                         taxamount: taxamount,
                                                         taxafamount: taxafamount,
-                                                        adv: adv
+                                                        adv: adv,
+                                                        order_id: order_id,
+                                                        order_date: order_date,
                                                     });
                                                 }
                                                 else {
@@ -645,7 +697,9 @@ sap.ui.define(
                                                         productDetails: productDetails,
                                                         taxamount: taxamount,
                                                         taxafamount: taxafamount,
-                                                        adv: adv
+                                                        adv: adv,
+                                                        order_id: order_id,
+                                                        order_date: order_date,
                                                     });
                                                 }
                                                 else {
@@ -678,6 +732,7 @@ sap.ui.define(
             },
             onPrintInvoice: function (data) {
                 var that = this;
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.total_amount))
                 var printContent = `<!DOCTYPE html>
                     <html lang="en">
                     
@@ -754,6 +809,14 @@ sap.ui.define(
                                                             <td>SM CODE</td>
                                                             <td style="text-align:left">: ${data.created_by}</td>
                                                         </tr>
+                                                         <tr>
+                                                            <td>Order No</td>
+                                                            <td style="text-align:left">: ${data.order_id}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Order Date</td>
+                                                            <td style="text-align:left">: ${data.order_date}</td>
+                                                        </tr>
                                                     </table>
                                                 </div>
                     
@@ -779,8 +842,26 @@ sap.ui.define(
                                                         </tr>
                                                     </thead>
                                                     <tbody>`;
-
+                var total = {
+                    pcs: 0,
+                    gross: 0,
+                    net: 0,
+                    value: 0,
+                    making: 0,
+                    stone: 0,
+                    stval: 0,
+                    hm: 0,
+                };
                 data.productDetails.map((value, index) => {
+                    total.pcs += parseFloat(value.qty);
+                    total.gross += parseFloat(value.gross_wt);
+                    total.net += parseFloat(value.net_wt);
+                    total.value += parseFloat(value.value);
+                    total.making += parseFloat(value.making);
+                    total.stone += parseFloat(value.stone_wt);
+                    total.stval += parseFloat(value.st_value);
+                    total.hm += parseFloat(value.hm_charge);
+
                     printContent += `<tr>
                                                         <td>${index + 1}</td>
                                                         <td class="">${value.orm_desc}</td>
@@ -797,7 +878,21 @@ sap.ui.define(
                                                     </tr>`;
                 });
 
-                printContent += ` </tbody>
+                printContent += ` <tr>
+                <th class="table_width_1">Total</th>
+                <th class="table_width_2"></th>
+                <th class="table_width_1"></th>
+                <th class="table_width_1 text-center">${total.pcs}</th>
+                <th class="table_width_1 text-center">${total.gross}</th>
+                <th class="table_width_1 text-center">${total.net}</th>
+                <th class="table_width_1 text-center">${total.value}</th>
+                <th class="table_width_1 text-center">${total.making}</th>
+                <th class="table_width_1 text-center">${total.stone}</th>
+                <th class="table_width_1 text-center">${total.stval}</th>
+                <th class="table_width_1 text-center">${total.hm}</th>
+                <th class="table_width_1 text-center"></th>
+            </tr>
+             </tbody>
                                                     </table>
                                                 </div>
                                             </div>
@@ -866,9 +961,9 @@ sap.ui.define(
                                     </div>
                                 </div>
                                 <div class="invoice-table-footer">
-                                    <div class="table-footer-left">
-                                        
-                                    </div>
+                                <div class="table-footer-left">
+                                <span style="font-weight:bold;color:black">${inWords}</span>
+                                </div>
                                     <div class="table-footer-right">
                                         <table class="totalamt-table">
                                             <tbody>
@@ -1090,24 +1185,55 @@ sap.ui.define(
                                                                             </thead>
                                                                             <tbody>`;
 
+                                                var total = {
+                                                    pcs: 0,
+                                                    gross: 0,
+                                                    net: 0,
+                                                    value: 0,
+                                                    making: 0,
+                                                    stone: 0,
+                                                    stval: 0,
+                                                    hm: 0,
+                                                };
                                                 data.productDetails.map((value, index) => {
+                                                    total.pcs += parseFloat(value.qty);
+                                                    total.gross += parseFloat(value.gross_wt);
+                                                    total.net += parseFloat(value.net_wt);
+                                                    total.value += parseFloat(value.value);
+                                                    total.making += parseFloat(value.making);
+                                                    total.stone += parseFloat(value.stone_wt);
+                                                    total.stval += parseFloat(value.st_value);
+                                                    total.hm += parseFloat(value.hm_charge);
                                                     printContent += `<tr>
-                                                    <td>${index + 1}</td>
-                                                    <td class="">${value.orm_desc}</td>
-                                                    <td class="table-description">${value.huid}</td>
-                                                    <td class="text-center">${value.qty}</td>
-                                                    <td class="text-center">${value.gross_wt}</td>
-                                                    <td class="text-center">${value.net_wt}</td>
-                                                    <td class="text-center">${value.value}</td>
-                                                    <td class="text-center">${value.making}</td>
-                                                    <td class="text-center">${value.stone_wt}</td>
-                                                    <td class="text-center">${value.st_val}</td>
-                                                    <td class="text-center">${value.hmcharge}</td>
-                                                    <td class="text-center">${value.amount}</td>
-                                                </tr>`;
+                                                                                                                <td>${index + 1}</td>
+                                                                                                                <td class="">${value.orm_desc} (${value.huid})</td>
+                                                                                                                <td class="table-description">${value.HSN}</td>
+                                                                                                                <td class="text-center">${value.qty}</td>
+                                                                                                                <td class="text-center">${value.gross_wt}</td>
+                                                                                                                <td class="text-center">${value.net_wt}</td>
+                                                                                                                <td class="text-center">${value.value}</td>
+                                                                                                                <td class="text-center">${value.making}</td>
+                                                                                                                <td class="text-center">${value.stone_wt}</td>
+                                                                                                                <td class="text-center">${value.st_value}</td>
+                                                                                                                <td class="text-center">${value.hm_charge}</td>
+                                                                                                                <td class="text-center">${value.amount}</td>
+                                                                                                            </tr>`;
                                                 });
 
-                                                printContent += ` </tbody>
+                                                printContent += `<tr>
+                                                                            <th class="table_width_1">Total</th>
+                                                                            <th class="table_width_2"></th>
+                                                                            <th class="table_width_1"></th>
+                                                                            <th class="table_width_1 text-center">${total.pcs}</th>
+                                                                            <th class="table_width_1 text-center">${total.gross}</th>
+                                                                            <th class="table_width_1 text-center">${total.net}</th>
+                                                                            <th class="table_width_1 text-center">${total.value}</th>
+                                                                            <th class="table_width_1 text-center">${total.making}</th>
+                                                                            <th class="table_width_1 text-center">${total.stone}</th>
+                                                                            <th class="table_width_1 text-center">${total.stval}</th>
+                                                                            <th class="table_width_1 text-center">${total.hm}</th>
+                                                                            <th class="table_width_1 text-center"></th>
+                                                                        </tr> </tbody>
                                                    </table>
                                                </div>
                                            </div>
@@ -1176,9 +1302,9 @@ sap.ui.define(
                                                </div>
                                            </div>
                                            <div class="invoice-table-footer">
-                                               <div class="table-footer-left">
-                                                  
-                                               </div>
+                                           <div class="table-footer-left">
+                                           <span style="font-weight:bold;color:black">${inWords}</span>
+                                           </div>
                                                <div class="table-footer-right">
                                                    <table class="totalamt-table">
                                                        <tbody>
@@ -1290,7 +1416,96 @@ sap.ui.define(
                 }
             },
             onpressBack: function (oEvent) {
-                this.oRouter.navTo("InvoiceList");
+                this.oRouter.navTo("InvoiceList", {
+                    invoice_id: "null"
+                });
+            },
+            convertToIndianWords: function (number) {
+                var that = this;
+                const words = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+                const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+                function convertThousands(num) {
+                    const quotient = Math.floor(num / 1000);
+                    const remainder = num % 1000;
+
+                    let result = "";
+                    if (quotient > 0) {
+                        result += that.convertToIndianWords(quotient) + " thousand ";
+                    }
+
+                    if (remainder > 0) {
+                        result += convertHundreds(remainder);
+                    }
+
+                    return result.trim();
+                }
+
+                function convertHundreds(num) {
+                    if (num >= 100) {
+                        const remainder = num % 100;
+                        if (remainder !== 0) {
+                            return words[Math.floor(num / 100)] + " hundred " + convertTens(remainder);
+                        } else {
+                            return words[Math.floor(num / 100)] + " hundred";
+                        }
+                    } else {
+                        return convertTens(num);
+                    }
+                }
+
+                function convertTens(num) {
+                    if (num < 10) {
+                        return words[num];
+                    } else if (num >= 11 && num <= 19) {
+                        return teens[num - 10];
+                    } else {
+                        return tens[Math.floor(num / 10)] + " " + words[num % 10];
+                    }
+                }
+
+                if (number === 0) {
+                    return "zero";
+                } else if (number < 1000) {
+                    return convertHundreds(number);
+                } else {
+                    return convertThousands(number);
+                }
+            },
+
+            convertNumberToWordsIndianSystem: function (number) {
+                const lakh = 100000;
+
+                if (number < 0 || isNaN(number) || !Number.isInteger(number)) {
+                    return "Invalid input";
+                }
+
+                if (number === 0) {
+                    return "zero";
+                }
+
+                let result = "";
+
+                // Convert lakh part
+                const lakhPart = Math.floor(number / lakh);
+                if (lakhPart > 0) {
+                    result += this.convertToIndianWords(lakhPart) + " lakh ";
+                }
+
+                // Convert remaining part
+                const remainingPart = number % lakh;
+                if (remainingPart > 0) {
+                    result += this.convertToIndianWords(remainingPart);
+                }
+                result = result.trim();
+                var aResult = result.split(" ");
+                var aUpper = [];
+                aResult.map(val => {
+                    aUpper.push(val[0].toUpperCase() + val.substr(1));
+                })
+                aUpper.push("Rupees Only");
+                return aUpper.join(" ");
             },
 
         });

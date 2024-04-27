@@ -40,6 +40,7 @@
                         <Input id="address" value="{buyer>/address}" />
                         <Label text="Id Type" />
                         <Select id="id_type"
+                            change="changeID"
                             selectedKey="{buyer>/id_type}"
                             items="{
                             path: 'idModel>/results'
@@ -50,7 +51,7 @@
                                 <f:ColumnElementData cellsSmall="5" cellsLarge="5" />
                             </layoutData>
                         </Select>
-                        <Input value="{buyer>/id_value}">
+                        <Input id="id_val" value="{buyer>/id_value}">
 
                         </Input>
                         <Label text="State" />
@@ -81,7 +82,7 @@
             path: 'omtypeModel>/results'
         }"
                         forceSelection="false">
-                        <core:Item key="{omtypeModel>id}" text="{omtypeModel>item}" />
+                        <core:Item key="{omtypeModel>item}" text="{omtypeModel>item}" />
                     </Select>
                 </VBox>
 
@@ -191,8 +192,18 @@
             <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween" direction="RowReverse">
                 <VBox>
                     <HBox alignItems="Center">
+                        <Title level="H1" text="Total Amount: " width="150px" />
+                        <Title level="H1" text="0" width="100px" textAlign="Right" id="totamount"
+                            class="p-10" />
+                    </HBox>
+                    <HBox alignItems="Center">
+                        <Title level="H1" text="Discount: " width="150px" />
+                        <Title level="H1" text="0" width="100px" textAlign="Right" id="discount"
+                            class="p-10" />
+                    </HBox>
+                    <HBox alignItems="Center">
                         <Title level="H1" text="Advance less " width="150px" />
-                        <Input width="100px" value="0" textAlign="Right" id="adv"
+                        <Input width="100px" value="0" textAlign="Right" id="adv" editable="false"
                             liveChange="calAddt"
                             class='fs-1' />
                     </HBox>
@@ -218,18 +229,18 @@
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="H1" text="Non Taxable Item: " width="150px" />
-                        <Input liveChange="calAddt" value="0" width="100px" textAlign="Right"
+                        <Input submit="calValue" value="0" width="100px" textAlign="Right"
                             id="nontax" class='fs-1' />
                     </HBox>
                     <HBox alignItems="Center">
-                        <Title level="H1" text="Discount: " width="150px" />
-                        <Title level="H1" text="0" width="100px" textAlign="Right" id="discount"
+                        <Title level="H1" text="Round Off: " width="150px" />
+                        <Title level="H1" text="0" width="100px" textAlign="Right" id="roundoff"
                             class="p-10" />
                     </HBox>
 
                     <HBox alignItems="Center">
                         <Title level="H1" text="Gross Total: " width="150px" />
-                        <Input liveChange="changeAmount" value="0" width="100px" textAlign="Right"
+                        <Input submit="changeAmount" value="0" width="100px" textAlign="Right"
                             id="amount" class='fs-1' />
                     </HBox>
                     <!-- <HBox alignItems="Center">

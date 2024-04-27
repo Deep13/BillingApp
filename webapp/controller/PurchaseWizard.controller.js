@@ -29,7 +29,8 @@ sap.ui.define(
                 document.addEventListener('keyup', doc_keyUp, false);
 
             },
-            _handleRouteMatched: function () {
+            _handleRouteMatched: async function () {
+                this.grandTotal = 0;
                 this._wizard.discardProgress(this._wizard.getSteps()[0]);
                 this._wizard.goToStep(this.byId("PurchaseStep"));
                 var data = this.getUserLog();
@@ -58,11 +59,10 @@ sap.ui.define(
                     this.oRouter.navTo("");
                 }
                 else {
-                    if (that.getOwnerComponent().getModel("SellerModel")) {
 
-                        var rate_default = that.getOwnerComponent().getModel("SellerModel").getProperty("/gold_rate");
-                        this.getView().byId("rate").setValue(rate_default);
-                    }
+                    var rate_default = await localStorage.getItem("gold_rate");
+                    this.getView().byId("rate").setValue(rate_default);
+
                     this.getView().byId("salesman").setSelectedKey(data.id);
                     $.ajax({
                         url: host,
@@ -97,6 +97,7 @@ sap.ui.define(
                         success: function (dataClient) {
                             try {
                                 var aDataId = JSON.parse(dataClient);
+                                aDataId.push({ id: '0', item: 'N/A' })
                                 var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
                                 that.getView().setModel(jModelID, "idModel")
                             }
@@ -249,6 +250,16 @@ sap.ui.define(
                 }
 
                 oEvent.getSource().getBinding("suggestionItems").filter(aFilters);
+            },
+            changeID: function (oEvent) {
+                this.getView().byId("id_val").setValue("");
+                var selected = oEvent.getParameter("selectedItem").getKey();
+                if (selected == "N/A") {
+                    this.getView().byId("id_val").setEnabled(false);
+                }
+                else {
+                    this.getView().byId("id_val").setEnabled(true);
+                }
             },
             onSelected: function (oEvent) {
                 var om_code = oEvent.getParameter('selectedItem').getBindingContext('stocksModel').getObject().om_code;
@@ -426,6 +437,7 @@ sap.ui.define(
                 this.checkValidStep();
             },
             goToPaymentStep: function () {
+                this.isnewOrder = false;
                 var that = this;
                 var host = this.getHost();
                 var adjo = this.getView().byId("adjo").getValue();
@@ -440,7 +452,7 @@ sap.ui.define(
                     this.getView().byId("order_rate").setValue(this.getView().byId("rate").getValue());
                     this.getView().byId("order_oldgold").setValue(this.getView().byId("adjo").getValue());
                     this.getView().byId("order_totamount").setText(this.getView().byId("adjo").getValue());
-                    this.getView().byId("order_cash").setValue(this.getView().byId("adjo").getValue());
+                    // this.getView().byId("order_cash").setValue(this.getView().byId("adjo").getValue());
 
                     $.ajax({
                         url: host,
@@ -466,6 +478,37 @@ sap.ui.define(
                             console.log('Error')
                         }
                     });
+                    $.ajax({
+                        url: host,
+                        type: "POST",
+                        data: {
+                            method: "checkfororderid",
+                            data: JSON.stringify({
+                                order_id: adjonumber
+                            })
+                        },
+                        success: function (dataClient) {
+                            try {
+                                if (dataClient) {
+                                    var aDataId = JSON.parse(dataClient);
+                                    if (aDataId[0] && aDataId[0].order_exists > 0) {
+                                        that.isnewOrder = false;
+                                    }
+                                    else {
+                                        that.isnewOrder = true;
+
+                                    }
+                                }
+                            }
+                            catch (e) {
+                                alert("Something went wrong", e)
+                            }
+                        },
+                        error: function (request, error) {
+                            console.log('Error')
+                        }
+                    });
+
 
                     return true;
                 }
@@ -831,7 +874,14 @@ sap.ui.define(
                         width: "100%",
                         type: "Success",
                         press: function () {
-                            that.printOrder(adjonumber)
+                            if (that.isnewOrder) {
+                                that.printOrder(adjonumber)
+                            }
+                            else {
+                                var voucher_id = that.getView().byId("order_voucher_id").getText();
+                                that.printVoucher(voucher_id)
+                            }
+
                         }
                     }))
                 }
@@ -926,6 +976,8 @@ sap.ui.define(
                 console.log(data);
 
                 sap.ui.core.BusyIndicator.hide();
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.total_amount))
+
                 // Open a new popup window
                 var printContent = `<!DOCTYPE html>
                 <html lang="en">
@@ -1066,6 +1118,10 @@ sap.ui.define(
                            </tr>
                        </tbody>
                    </table>
+                   <br/>
+                   <div>
+                   <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
+                   </div>
                    </div>
                    <div class="text-end table-footer-right">
                    <table class="totalamt-table">
@@ -1135,7 +1191,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 this.getView().byId("order_upi").setValue(0);
                 this.getView().byId("order_card").setValue(0);
                 this.getView().byId("order_bank").setValue(0);
-                this.getView().byId("order_amount").setValue(0);
+                // this.getView().byId("order_amount").setValue(0);
                 this.getView().byId("order_totamount").setText(0);
                 this.getView().byId("order_addt").setValue('');
                 this.getView().byId("order_chequeno").setValue('');
@@ -1151,13 +1207,16 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
             },
             calVal: function () {
                 var old = this.getView().byId('order_oldgold').getValue();
-                var adamount = this.getView().byId('order_amount').getValue();
+                var cash = this.getView().byId("order_cash").getValue();
+                var cheque = this.getView().byId("order_cheque").getValue();
+                var upi = this.getView().byId("order_upi").getValue();
+                var card = this.getView().byId("order_card").getValue();
+                var bank = this.getView().byId("order_bank").getValue();
+                var adamount = parseFloat(cash) + parseFloat(cheque) + parseFloat(upi) + parseFloat(card) + parseFloat(bank);
                 this.getView().byId('order_totamount').setText(parseFloat(old) + parseFloat(adamount));
-                this.getView().byId('order_cash').setValue(parseFloat(old) + parseFloat(adamount));
-                this.clearAll();
             },
             adjustBal: function () {
-                var amount = this.getView().byId("order_totamount").getText();
+                var amount = this.getView().byId("order_amount").getValue();
                 if (amount) {
                     var card = this.getView().byId("order_card").getValue();
                     if (!card) {
@@ -1259,7 +1318,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 var upi = this.getView().byId("order_upi").getValue();
                 var card = this.getView().byId("order_card").getValue();
                 var bank = this.getView().byId("order_bank").getValue();
-                var amount = this.getView().byId("order_amount").getValue();
+                // var amount = this.getView().byId("order_amount").getValue();
                 var total_amount = this.getView().byId("order_totamount").getText();
                 var addt = this.getView().byId("order_addt").getValue();
                 var chequeno = this.getView().byId("order_chequeno").getValue();
@@ -1281,7 +1340,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                     city_pin: buyerDetails.pincode,
                     notes: addt,
                     total_amount: total_amount,
-                    adv_amount: amount,
+                    adv_amount: total_amount,
                     type: om_type,
                     purity: purity,
                     rate: rate,
@@ -1298,60 +1357,109 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                     old_gold_amount: oldgold,
                     purchase_id: purchase_id,
                 }
-                $.ajax({
-                    url: host,
-                    type: "POST",
-                    data: {
-                        method: "insertOrder",
-                        data: JSON.stringify(order_payload),
-                    },
-                    success: function (dataClient) {
-                        // sap.ui.core.BusyIndicator.hide();
-                        var adjp = that.getView().byId("adjp").getValue();
-                        var adjpnumber = that.getView().byId("adjpnumber").getValue();
-                        if (adjp && adjpnumber) {
-                            that.insertInvoice();
-                        }
-                        else {
-                            that.onSavePurchase();
-                        }
-                        console.log(dataClient);
-                        $.ajax({
-                            url: host,
-                            type: "POST",
-                            data: {
-                                method: "insertVoucher",
-                                data: JSON.stringify({
-                                    order_id: order_id,
-                                    amount: amount,
-                                    voucher_date: order_date,
-                                    rate: rate,
-                                }),
-                            },
-                            success: function (dataClient) {
-                                sap.ui.core.BusyIndicator.hide();
-                                console.log(dataClient);
-                                // MessageBox.success("Succesfully Order created", {
-                                //     actions: [MessageBox.Action.OK],
-                                //     onClose: function (sAction) {
-                                //         that.oRouter.navTo('Main')
-                                //     }
-                                // });
-                            },
-                            error: function (request, error) {
-                                console.log('Error');
-                                sap.ui.core.BusyIndicator.hide();
-                            },
-                        });
-                        // MessageBox.success("Succesfully Order created");
+                if (this.isnewOrder) {
+                    $.ajax({
+                        url: host,
+                        type: "POST",
+                        data: {
+                            method: "insertOrder",
+                            data: JSON.stringify(order_payload),
+                        },
+                        success: function (dataClient) {
+                            // sap.ui.core.BusyIndicator.hide();
+                            var adjp = that.getView().byId("adjp").getValue();
+                            var adjpnumber = that.getView().byId("adjpnumber").getValue();
+                            if (adjp && adjpnumber) {
+                                that.insertInvoice();
+                            }
+                            else {
+                                that.onSavePurchase();
+                            }
+                            console.log(dataClient);
+                            $.ajax({
+                                url: host,
+                                type: "POST",
+                                data: {
+                                    method: "insertVoucher",
+                                    data: JSON.stringify({
+                                        order_id: order_id,
+                                        amount: total_amount,
+                                        voucher_date: order_date,
+                                        rate: rate,
+                                        cash: cash,
+                                        card: card,
+                                        cheque: cheque,
+                                        bank: bank,
+                                        upi: upi,
+                                        oldgold: oldgold,
+                                        apprcode: apprcode,
+                                        chequeno: chequeno,
+                                        bank_details: bankdetails,
+                                        upidetails: upidetails,
+                                    }),
+                                },
+                                success: function (dataClient) {
+                                    sap.ui.core.BusyIndicator.hide();
+                                    console.log(dataClient);
+                                    // MessageBox.success("Succesfully Order created", {
+                                    //     actions: [MessageBox.Action.OK],
+                                    //     onClose: function (sAction) {
+                                    //         that.oRouter.navTo('Main')
+                                    //     }
+                                    // });
+                                },
+                                error: function (request, error) {
+                                    console.log('Error');
+                                    sap.ui.core.BusyIndicator.hide();
+                                },
+                            });
+                            // MessageBox.success("Succesfully Order created");
 
 
-                    },
-                    error: function (request, error) {
-                        console.log('Error');
-                        sap.ui.core.BusyIndicator.hide();
-                    },
-                });
+                        },
+                        error: function (request, error) {
+                            console.log('Error');
+                            sap.ui.core.BusyIndicator.hide();
+                        },
+                    });
+                }
+                else {
+                    $.ajax({
+                        url: host,
+                        type: "POST",
+                        data: {
+                            method: "insertVoucher",
+                            data: JSON.stringify({
+                                order_id: order_id,
+                                amount: total_amount,
+                                voucher_date: order_date,
+                                rate: rate,
+                                cash: cash,
+                                card: card,
+                                cheque: cheque,
+                                bank: bank,
+                                upi: upi,
+                                oldgold: oldgold,
+                            }),
+                        },
+                        success: function (dataClient) {
+                            sap.ui.core.BusyIndicator.hide();
+                            console.log(dataClient);
+                            var adjp = that.getView().byId("adjp").getValue();
+                            var adjpnumber = that.getView().byId("adjpnumber").getValue();
+                            if (adjp && adjpnumber) {
+                                that.insertInvoice();
+                            }
+                            else {
+                                that.onSavePurchase();
+                            }
+                        },
+                        error: function (request, error) {
+                            console.log('Error');
+                            sap.ui.core.BusyIndicator.hide();
+                        },
+                    });
+                }
             },
 
             printOrder: function (oId) {
@@ -1387,6 +1495,40 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 });
 
             },
+
+            printVoucher: function (oId) {
+                var that = this;
+                var host = this.getHost();
+                var voucherId = oId.split(": ")[1];
+                $.ajax({
+                    url: host,
+                    type: "POST",
+                    data: {
+                        method: "getVoucherWithOrder",
+                        data: JSON.stringify({
+                            voucher_id: voucherId
+                        })
+                    },
+                    success: function (dataClient) {
+                        try {
+                            if (dataClient) {
+                                var aDataId = JSON.parse(dataClient);
+                                if (aDataId) {
+                                    that.generateVoucherBill(aDataId);
+                                }
+                            }
+
+                        }
+                        catch (e) {
+                            alert("Something went wrong", e)
+                        }
+                    },
+                    error: function (request, error) {
+                        console.log('Error')
+                    }
+                });
+
+            },
             generateOrderBill: function (data) {
                 var that = this;
                 var host = this.getHost();
@@ -1407,8 +1549,215 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
 
             },
 
+            generateVoucherBill: function (data) {
+                var that = this;
+                var host = this.getHost();
+                sap.ui.core.BusyIndicator.show();
+                console.log(data);
+
+                sap.ui.core.BusyIndicator.hide();
+                // Open a new popup window
+                var printContent = this.getHTMLContentVoucher(data[0]);
+
+                const popupWindow = window.open('', "_blank", 'width=800,height=900');
+                // Render the PopupContent component inside the popup window
+                popupWindow.document.write(printContent);
+                popupWindow.document.close();
+
+                // Trigger the print action in the new window
+                popupWindow.print();
+
+            },
+            getHTMLContentVoucher: function (data) {
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.amount))
+
+                return `<!DOCTYPE html>
+                <html lang="en">
+                
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+                    <title>Manikanchan Jewellery House</title>
+                
+                    <!-- Bootstrap CSS -->
+                    <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+                
+                    <!-- Fearther CSS -->
+                    <link rel="stylesheet" href="./assets/css/feather.css">
+                
+                    <!-- Fontawesome CSS -->
+                    <link rel="stylesheet" href="./assets/plugins/fontawesome/css/fontawesome.min.css">
+                    <link rel="stylesheet" href="./assets/plugins/fontawesome/css/all.min.css">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+                
+                    <!-- Main CSS -->
+                    <link rel="stylesheet" href="./assets/css/style.css">
+                </head>
+                
+                <body id="main-body">
+                    <div class="main-wrapper">
+                        <div class="container">
+                            <div class="invoice-wrapper download_section" id="download_section">
+                                <div class="inv-content">
+                                    <div class="invoice-header">
+                                        <div class="inv-header-left">
+                                        <div style="
+                                        font-size: 24px;
+                                        font-weight: 700;
+                                        color: #2c3038;
+                                    ">ADVANCE - VOUCHER</div>
+                                        </div>
+                                        <div class="inv-header-right">
+                                        </div>
+                                    </div>
+                                    <div class="invoice-address">
+                                        <div class="invoice-to">
+                                            <span>Invoice To:</span>
+                                            <div class="inv-to-address">
+                                               ${data.name}<br>
+                                               ${data.address}<br>
+                                               ${data.gst_number}<br>
+                                               ${data.contact_number}
+                                            </div>
+                                        </div>
+                                        <div class="invoice-to">
+                
+                                        </div>
+                                        <div class="company-details">
+                                        <span></span>
+                                        <div>
+                                            <br />
+                                            <table>
+                                                <tr>
+                                                    <td>Order No.</td>
+                                                    <td style="text-align:left">: ${data.order_id}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Voucher No.</td>
+                                                    <td style="text-align:left">: ${data.id}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Voucher Date</td>
+                                                    <td style="text-align:left">: ${data.voucher_date}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>SM CODE</td>
+                                                    <td style="text-align:left">: ${data.created_by}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+            
+                                    </div>
+                                    </div>
+                                    <div class="invoice-table">
+                                        <div class="table-responsive">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th class="table_width_2">Item</th>
+                                                        <th class="table_width_1">HSN</th>
+                                                        <th class="table_width_1 text-center">AMOUNT</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td class="">${data.type}</td>
+                                                    <td class="table-description">${data.HSN}</td>
+                                                    <td class="text-center">${data.amount}</td>
+                                                </tr>
+                                                 </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="invoice-table-footer" style="
+                                display: flex;
+                                align-items: flex-start;
+                            ">
+                                    <div class="table-footer-left">
+                                    <span>MODE OF PAYMENT</span>
+                                    <br/>
+                                    <table>
+                                    <tbody>
+                                        <tr>
+                                            <td>CASH</td>
+                                            <td>: ${data.cash}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>CHEQUE</td>
+                                            <td>: ${data.cheque}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>CARD</td>
+                                            <td>: ${data.card}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>UPI</td>
+                                            <td>: ${data.upi}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>BANK TRF</td>
+                                            <td>: ${data.bank}</td>
+                                        </tr>
+                                        <tr>
+                                        <td>OLD GOLD ADJ</td>
+                                        <td>: ${data.oldgold}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <br/>
+                                <div>
+                                <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
+                                </div>
+                                    </div>
+                                    <div class="table-footer-right">
+                                        <table class="totalamt-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Total:</td>
+                                                    <td>${data.amount}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                </div>
+                        </div>
+                        <div class="file-link">
+                            <button class="download_btn download-link" onclick="downloadPDF()">
+                                <i class="feather-download-cloud me-1"></i> <span>Download</span>
+                            </button>
+                            <a href="#" id="printLink" class="print-link">
+                                <i class="feather-printer"></i> <span class="">Print</span>
+                            </a>
+                        </div>
+                    </div>
+                    </div>
+                    </body>
+                    <script>
+                    var printLink = document.getElementById('printLink');
+
+                    // Add a click event listener to the link
+                    printLink.addEventListener('click', function(event) {
+                    // Prevent the default link behavior
+                    event.preventDefault();
+
+                    // Trigger the print action
+                    window.print();
+                    });
+
+                    function downloadPDF() {
+                    // Get the element containing the static content
+                    var staticContent = document.getElementById('download_section');
+
+                    // Use html2pdf to generate and download the PDF
+                    html2pdf(staticContent,{ filename: "Advance-voucher:"+${data.order_id} });
+                    }
+                    </script>
+                    </html>`;
+            },
 
             getHTMLContent: function (data) {
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.total_amount))
                 return `<!DOCTYPE html>
                 <html lang="en">
                 
@@ -1518,7 +1867,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                     <tbody>
                                         <tr>
                                             <td>CASH</td>
-                                            <td>: ${data.adv_amount}</td>
+                                            <td>: ${data.cash}</td>
                                         </tr>
                                         <tr>
                                             <td>CHEQUE</td>
@@ -1542,6 +1891,10 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                     </tr>
                                     </tbody>
                                 </table>
+                                <br/>
+                                <div>
+                                <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
+                                </div>
                                     </div>
                                     <div class="table-footer-right">
                                         <table class="totalamt-table">
@@ -1622,6 +1975,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 var taxamount = this.getView().byId("invoice_taxamount").getText();
                 var taxafamount = this.getView().byId("invoice_taxafamount").getText();
                 var adv = this.getView().byId("invoice_adv").getValue();
+                var purchase_id = this.getView().byId("order_id").getValue();
                 $.ajax({
                     url: host,
                     type: "POST",
@@ -1659,7 +2013,11 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                             due: due,
                             taxamount: taxamount,
                             taxafamount: taxafamount,
-                            adv: adv
+                            adv: adv,
+                            order_id: "",
+                            order_date: '0000-00-00',
+                            old_gold_amount: adv,
+                            purchase_id: purchase_id,
                         }),
                     },
                     success: function (dataClient) {
@@ -1682,54 +2040,6 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                 success: function (dataClient) {
                                     console.log(dataClient);
                                     sap.ui.core.BusyIndicator.hide();
-                                    // that.updateStock(productDetails)
-                                    // MessageBox.confirm("Succesfully Updated", {
-                                    //     actions: ["Generate E-Bill", MessageBox.Action.CANCEL],
-                                    //     emphasizedAction: MessageBox.Action.CANCEL,
-                                    //     onClose: function (sAction) {
-                                    //         if (sAction == "Print") {
-
-                                    //         }
-                                    //         else if (sAction == "Generate E-Bill") {
-                                    //             that.generateBill({
-                                    //                 invoice_id: invoice_id,
-                                    //                 contact_number: buyerDetails.contact_number,
-                                    //                 customer_name: buyerDetails.name,
-                                    //                 id_type: buyerDetails.id_type,
-                                    //                 card_number: buyerDetails.id_value,
-                                    //                 address: buyerDetails.address,
-                                    //                 state: buyerDetails.state,
-                                    //                 invoice_date: invoice_date,
-                                    //                 gst_number: buyerDetails.gst_number,
-                                    //                 city_pin: buyerDetails.pincode,
-                                    //                 notes: addt,
-                                    //                 discounted_price: discount,
-                                    //                 cgst: cgst,
-                                    //                 sgst: sgst,
-                                    //                 nontax: nontax,
-                                    //                 total_amount: amount,
-                                    //                 type: om_type,
-                                    //                 purity: purity,
-                                    //                 rate: rate,
-                                    //                 created_by: salesman,
-                                    //                 cash: cash,
-                                    //                 cheque: cheque,
-                                    //                 upi: upi,
-                                    //                 card: card,
-                                    //                 bank: bank,
-                                    //                 chequeno: chequeno,
-                                    //                 upidetails: upidetails,
-                                    //                 apprcode: apprcode,
-                                    //                 bankdetails: bankdetails,
-                                    //                 due: due,
-                                    //                 productDetails: productDetails,
-                                    //                 taxamount: taxamount,
-                                    //                 taxafamount: taxafamount,
-                                    //                 adv: adv
-                                    //             });
-                                    //         }
-                                    //     }
-                                    // });
                                 },
                                 error: function (request, error) {
                                     MessageBox.error("Submition failed.");
@@ -1816,6 +2126,9 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                     value.amount = (parseFloat(value.net_wt) * rate) + parseFloat(value.making ? value.making : 0) + parseFloat(value.hmcharge ? value.hmcharge : 0);
                 });
                 this.getView().getModel("InvoiceModel").refresh(true);
+                this.getView().byId("invoice_discount").setText(0);
+                this.getView().byId("roundoff").setText(0);
+                this.grandTotal = 0;
                 this.calAddtInvoice();
             },
             calAddtInvoice: function () {
@@ -1826,12 +2139,14 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 if (!adv) {
                     adv = 0
                 }
+                else {
+                    adv = parseFloat(adv)
+                }
                 products.map(value => {
                     totalVal += parseFloat(value.amount);
                 });
                 if (totalVal && totalVal > 0) {
-                    var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
-                    gst = parseFloat(gst);
+
                     var nontax = this.getView().byId("invoice_nontax").getValue();
                     var discount = this.getView().byId("invoice_discount").getText();
                     if (!discount) {
@@ -1846,12 +2161,30 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                     else {
                         nontax = parseFloat(nontax)
                     }
-                    this.getView().byId("invoice_taxamount").setText(totalVal);
+                    this.getView().byId("totamount").setText(totalVal);
+                    this.getView().byId("invoice_discount").setText(discount);
+                    this.getView().byId("invoice_taxamount").setText(totalVal - (adv + discount));
+                    var taxamount = totalVal - (adv + discount);
+                    var gst = (taxamount * (parseFloat(gstM.cgst) / 100)).toFixed(2);
+                    gst = parseFloat(gst);
                     this.getView().byId("invoice_cgst").setText(gst);
                     this.getView().byId("invoice_sgst").setText(gst);
-                    this.getView().byId("invoice_taxafamount").setText(gst + gst + totalVal);
-                    this.getView().byId("invoice_amount").setValue((gst + gst + nontax + totalVal - discount - adv).toFixed(2));
-                    this.getView().byId("invoice_cash").setValue((gst + gst + nontax + totalVal - discount - adv).toFixed(2));
+                    var taxafamount = gst + gst + (totalVal - (adv + discount));
+                    this.getView().byId("invoice_taxafamount").setText(taxafamount);
+                    var totalAmount = nontax + taxafamount;
+                    if (this.grandTotal > totalAmount) {
+                        var roundoff = this.grandTotal - totalAmount;
+                    }
+                    else {
+                        var roundoff = 0;
+                    }
+                    roundoff = roundoff.toFixed(2);
+                    roundoff = parseFloat(roundoff)
+                    this.getView().byId("roundoff").setText(roundoff);
+                    this.getView().byId("invoice_amount").setValue((totalAmount + roundoff).toFixed(2));
+                    this.grandTotal = (totalAmount + roundoff).toFixed(2);
+
+                    this.getView().byId("invoice_cash").setValue((totalAmount + roundoff).toFixed(2));
                 }
                 else {
                     this.getView().byId("invoice_taxamount").setText(0);
@@ -1866,8 +2199,8 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 this.onresetPaymentInvoice();
             },
             onresetPaymentInvoice: function () {
-                var amount = this.getView().byId("invoice_amount").getValue();
-                this.getView().byId("invoice_cash").setValue(amount);
+                // var amount = this.getView().byId("invoice_amount").getValue();
+                // this.getView().byId("invoice_cash").setValue(amount);
                 this.getView().byId("invoice_cheque").setValue(0);
                 this.getView().byId("invoice_upi").setValue(0);
                 this.getView().byId("invoice_card").setValue(0);
@@ -1886,32 +2219,36 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
             changeAmountInvoice: function () {
                 var amount = this.getView().byId("invoice_amount").getValue();
                 amount = parseFloat(amount);
-                var adv = this.getView().byId("invoice_adv").getValue();
-                var nontax = this.getView().byId("invoice_nontax").getValue();
-                if (!adv) {
-                    adv = 0
-                }
-                if (!nontax) {
-                    nontax = 0
-                }
-                else {
-                    nontax = parseFloat(nontax)
-                }
-                var products = this.getView().getModel("InvoiceModel").getProperty("/results");
-                var gstM = this.getView().getModel("gstModel").getData();
-                var totalVal = 0;
-                products.map(value => {
-                    totalVal += parseFloat(value.amount);
-                });
-                var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
-                gst = parseFloat(gst);
-                totalVal = totalVal + gst + gst + nontax - adv;
-                if (totalVal && totalVal > 0 && totalVal > amount) {
-                    this.getView().byId("invoice_discount").setText((totalVal - amount).toFixed(2));
-                }
-                else {
-                    this.getView().byId("invoice_discount").setText(0)
-                }
+                // var adv = this.getView().byId("invoice_adv").getValue();
+                // var nontax = this.getView().byId("invoice_nontax").getValue();
+                // if (!adv) {
+                //     adv = 0
+                // }
+                // if (!nontax) {
+                //     nontax = 0
+                // }
+                // else {
+                //     nontax = parseFloat(nontax)
+                // }
+                // var products = this.getView().getModel("InvoiceModel").getProperty("/results");
+                // var gstM = this.getView().getModel("gstModel").getData();
+                // var totalVal = 0;
+                // products.map(value => {
+                //     totalVal += parseFloat(value.amount);
+                // });
+                // var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
+                // gst = parseFloat(gst);
+                // totalVal = totalVal + gst + gst + nontax - adv;
+                var discount = this.grandTotal - amount;
+                // if (totalVal && totalVal > 0 && totalVal > amount) {
+                //     this.getView().byId("invoice_discount").setText((totalVal - amount).toFixed(2));
+                // }
+                // else {
+                //     this.getView().byId("invoice_discount").setText(0)
+                // }
+                this.getView().byId("invoice_discount").setText(discount);
+                this.grandTotal = amount;
+                this.calAddtInvoice();
                 this.onresetPaymentInvoice();
             },
             calDueInvoice: function () {
@@ -2023,8 +2360,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 var that = this;
                 var host = this.getHost();
                 sap.ui.core.BusyIndicator.show();
-                console.log(data);
-
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.total_amount))
                 sap.ui.core.BusyIndicator.hide();
                 // Open a new popup window
                 var printContent = `<!DOCTYPE html>
@@ -2133,24 +2469,55 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                                                             </thead>
                                                                             <tbody>`;
 
+                var total = {
+                    pcs: 0,
+                    gross: 0,
+                    net: 0,
+                    value: 0,
+                    making: 0,
+                    stone: 0,
+                    stval: 0,
+                    hm: 0,
+                };
                 data.productDetails.map((value, index) => {
+                    total.pcs += parseFloat(value.qty);
+                    total.gross += parseFloat(value.gross_wt);
+                    total.net += parseFloat(value.net_wt);
+                    total.value += parseFloat(value.value);
+                    total.making += parseFloat(value.making);
+                    total.stone += parseFloat(value.stone_wt);
+                    total.stval += parseFloat(value.st_value);
+                    total.hm += parseFloat(value.hm_charge);
                     printContent += `<tr>
-                                                    <td>${index + 1}</td>
-                                                    <td class="">${value.orm_desc}</td>
-                                                    <td class="table-description">${value.huid}</td>
-                                                    <td class="text-center">${value.qty}</td>
-                                                    <td class="text-center">${value.gross_wt}</td>
-                                                    <td class="text-center">${value.net_wt}</td>
-                                                    <td class="text-center">${value.value}</td>
-                                                    <td class="text-center">${value.making}</td>
-                                                    <td class="text-center">${value.stone_wt}</td>
-                                                    <td class="text-center">${value.st_value}</td>
-                                                    <td class="text-center">${value.hm_charge}</td>
-                                                    <td class="text-center">${value.amount}</td>
-                                                </tr>`;
+                                                                                <td>${index + 1}</td>
+                                                                                <td class="">${value.orm_desc} (${value.huid})</td>
+                                                                                <td class="table-description">${value.HSN}</td>
+                                                                                <td class="text-center">${value.qty}</td>
+                                                                                <td class="text-center">${value.gross_wt}</td>
+                                                                                <td class="text-center">${value.net_wt}</td>
+                                                                                <td class="text-center">${value.value}</td>
+                                                                                <td class="text-center">${value.making}</td>
+                                                                                <td class="text-center">${value.stone_wt}</td>
+                                                                                <td class="text-center">${value.st_value}</td>
+                                                                                <td class="text-center">${value.hm_charge}</td>
+                                                                                <td class="text-center">${value.amount}</td>
+                                                                            </tr>`;
                 });
 
-                printContent += ` </tbody>
+                printContent += `<tr>
+                                                                            <th class="table_width_1">Total</th>
+                                                                            <th class="table_width_2"></th>
+                                                                            <th class="table_width_1"></th>
+                                                                            <th class="table_width_1 text-center">${total.pcs}</th>
+                                                                            <th class="table_width_1 text-center">${total.gross}</th>
+                                                                            <th class="table_width_1 text-center">${total.net}</th>
+                                                                            <th class="table_width_1 text-center">${total.value}</th>
+                                                                            <th class="table_width_1 text-center">${total.making}</th>
+                                                                            <th class="table_width_1 text-center">${total.stone}</th>
+                                                                            <th class="table_width_1 text-center">${total.stval}</th>
+                                                                            <th class="table_width_1 text-center">${total.hm}</th>
+                                                                            <th class="table_width_1 text-center"></th>
+                                                                        </tr> </tbody>
                                                    </table>
                                                </div>
                                            </div>
@@ -2219,9 +2586,9 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                                </div>
                                            </div>
                                            <div class="invoice-table-footer">
-                                               <div class="table-footer-left">
-                                                  
-                                               </div>
+                                           <div class="table-footer-left">
+                                           <span style="font-weight:bold;color:black">${inWords}</span>
+                                           </div>
                                                <div class="table-footer-right">
                                                    <table class="totalamt-table">
                                                        <tbody>
@@ -2296,7 +2663,93 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 popupWindow.document.write(printContent);
 
             },
+            convertToIndianWords: function (number) {
+                var that = this;
+                const words = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+                const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 
+                function convertThousands(num) {
+                    const quotient = Math.floor(num / 1000);
+                    const remainder = num % 1000;
+
+                    let result = "";
+                    if (quotient > 0) {
+                        result += that.convertToIndianWords(quotient) + " thousand ";
+                    }
+
+                    if (remainder > 0) {
+                        result += convertHundreds(remainder);
+                    }
+
+                    return result.trim();
+                }
+
+                function convertHundreds(num) {
+                    if (num >= 100) {
+                        const remainder = num % 100;
+                        if (remainder !== 0) {
+                            return words[Math.floor(num / 100)] + " hundred " + convertTens(remainder);
+                        } else {
+                            return words[Math.floor(num / 100)] + " hundred";
+                        }
+                    } else {
+                        return convertTens(num);
+                    }
+                }
+
+                function convertTens(num) {
+                    if (num < 10) {
+                        return words[num];
+                    } else if (num >= 11 && num <= 19) {
+                        return teens[num - 10];
+                    } else {
+                        return tens[Math.floor(num / 10)] + " " + words[num % 10];
+                    }
+                }
+
+                if (number === 0) {
+                    return "zero";
+                } else if (number < 1000) {
+                    return convertHundreds(number);
+                } else {
+                    return convertThousands(number);
+                }
+            },
+
+            convertNumberToWordsIndianSystem: function (number) {
+                const lakh = 100000;
+
+                if (number < 0 || isNaN(number) || !Number.isInteger(number)) {
+                    return "Invalid input";
+                }
+
+                if (number === 0) {
+                    return "zero";
+                }
+
+                let result = "";
+
+                // Convert lakh part
+                const lakhPart = Math.floor(number / lakh);
+                if (lakhPart > 0) {
+                    result += this.convertToIndianWords(lakhPart) + " lakh ";
+                }
+
+                // Convert remaining part
+                const remainingPart = number % lakh;
+                if (remainingPart > 0) {
+                    result += this.convertToIndianWords(remainingPart);
+                }
+                result = result.trim();
+                var aResult = result.split(" ");
+                var aUpper = [];
+                aResult.map(val => {
+                    aUpper.push(val[0].toUpperCase() + val.substr(1));
+                })
+                aUpper.push("Rupees Only");
+                return aUpper.join(" ");
+            },
         });
     }
 );

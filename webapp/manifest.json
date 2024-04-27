@@ -148,12 +148,12 @@
         },
         {
           "name": "InvoiceList",
-          "pattern": "InvoiceList",
+          "pattern": "InvoiceList/{invoice_id}",
           "target": "InvoiceList"
         },
         {
           "name": "OrderList",
-          "pattern": "OrderList",
+          "pattern": "OrderList/{order_id}",
           "target": "OrderList"
         },
         {
@@ -163,7 +163,7 @@
         },
         {
           "name": "PurchaseList",
-          "pattern": "PurchaseList",
+          "pattern": "PurchaseList/{purchase_id}",
           "target": "PurchaseList"
         },
         {

@@ -36,6 +36,7 @@ sap.ui.define(
               var aData = JSON.parse(dataClient);
               var jData = new sap.ui.model.json.JSONModel(aData);
               that.getOwnerComponent().setModel(jData, "SellerModel");
+              localStorage.setItem("gold_rate", rate);
               // that.goldRate = aData.gold_rate;
             }
             catch (e) {

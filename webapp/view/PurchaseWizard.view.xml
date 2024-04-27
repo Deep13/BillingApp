@@ -62,6 +62,7 @@
                                         <Input id="address" value="{buyer>/address}" />
                                         <Label text="Id Type" />
                                         <Select id="id_type"
+                                            change="changeID"
                                             selectedKey="{buyer>/id_type}"
                                             items="{
                                             path: 'idModel>/results'
@@ -73,7 +74,7 @@
                                                     cellsLarge="5" />
                                             </layoutData>
                                         </Select>
-                                        <Input value="{buyer>/id_value}">
+                                        <Input id="id_val" value="{buyer>/id_value}">
 
                                         </Input>
                                         <Label text="State" />
@@ -223,7 +224,7 @@
                                         <Input id="adjp" submit="getInvoiceNumber"
                                             liveChange="adjustCheque" />
                                         <Input id="adjpnumber" class="sapUiSmallMarginBegin"
-                                            placeholder="Invoice number" editable="false" />
+                                            placeholder="Invoice number" />
                                     </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="H1" text="Cash: " width="120px" />
@@ -294,12 +295,12 @@
                                             textAlign="Right"
                                             id="order_oldgold" class='fs-1' />
                                     </HBox>
-                                    <HBox alignItems="Center">
+                                    <!-- <HBox alignItems="Center">
                                         <Title level="h1" text="Advance Amount: " width="150px" />
                                         <Input value="0" width="100px" textAlign="Right"
                                             liveChange="calVal"
                                             id="order_amount" class='fs-1' />
-                                    </HBox>
+                                    </HBox> -->
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="Total Amount: " width="150px" />
                                         <Title level="h1" id="order_totamount" text="" width="100px" />
@@ -309,30 +310,30 @@
                                     <Title level="h1" text="Payment mode" />
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="Cash: " width="120px" />
-                                        <Input id="order_cash" liveChange="clearAll" />
+                                        <Input id="order_cash" liveChange="calVal" value="0" />
                                     </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="Card: " width="120px" />
-                                        <Input id="order_card" liveChange="adjustBal" />
+                                        <Input id="order_card" liveChange="calVal" value="0" />
                                         <Input id="order_apprcode" class="sapUiSmallMarginBegin"
                                             placeholder="Approval code" />
                                     </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="Cheque: " width="120px" />
-                                        <Input id="order_cheque" liveChange="adjustBal" />
+                                        <Input id="order_cheque" liveChange="calVal" value="0" />
                                         <Input id="order_chequeno" class="sapUiSmallMarginBegin"
                                             placeholder="Cheque number" />
                                     </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="UPI: " width="120px" />
-                                        <Input id="order_upi" liveChange="adjustBal" />
+                                        <Input id="order_upi" liveChange="calVal" value="0" />
                                         <Input id="order_upidetails" class="sapUiSmallMarginBegin"
                                             placeholder="UPI id" />
                                     </HBox>
 
                                     <HBox alignItems="Center">
                                         <Title level="h1" text="Bank Transfer: " width="120px" />
-                                        <Input id="order_bank" liveChange="adjustBal" />
+                                        <Input id="order_bank" liveChange="calVal" value="0" />
                                         <Input id="order_bankdetails" class="sapUiSmallMarginBegin"
                                             placeholder="Details" />
                                     </HBox>
@@ -462,7 +463,24 @@
                             <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween"
                                 direction="RowReverse">
                                 <VBox>
-
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Total Amount: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="totamount"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Discount: " width="150px" />
+                                        <Title level="H1" text="0" width="100px" textAlign="Right"
+                                            id="invoice_discount"
+                                            class="p-10" />
+                                    </HBox>
+                                    <HBox alignItems="Center">
+                                        <Title level="H1" text="Advance less " width="150px" />
+                                        <Input width="100px" textAlign="Right" id="invoice_adv"
+                                            liveChange="calAddtInvoice"
+                                            class='fs-1' editable="false" />
+                                    </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="H1" text="Taxable Amount: " width="150px" />
                                         <Title level="H1" text="0" width="100px" textAlign="Right"
@@ -491,26 +509,22 @@
                                     </HBox>
                                     <HBox alignItems="Center">
                                         <Title level="H1" text="Non Taxable Item: " width="150px" />
-                                        <Input liveChange="calAddtInvoice" value="0" width="100px"
+                                        <Input submit="calValueInvoice" value="0"
+                                            width="100px"
                                             textAlign="Right"
                                             id="invoice_nontax" class='fs-1' />
                                     </HBox>
                                     <HBox alignItems="Center">
-                                        <Title level="H1" text="Advance less " width="150px" />
-                                        <Input width="100px" textAlign="Right" id="invoice_adv"
-                                            liveChange="calAddtInvoice"
-                                            class='fs-1' editable="false" />
-                                    </HBox>
-                                    <HBox alignItems="Center">
-                                        <Title level="H1" text="Discount: " width="150px" />
+                                        <Title level="H1" text="Round Off: " width="150px" />
                                         <Title level="H1" text="0" width="100px" textAlign="Right"
-                                            id="invoice_discount"
+                                            id="roundoff"
                                             class="p-10" />
                                     </HBox>
 
+
                                     <HBox alignItems="Center">
                                         <Title level="H1" text="Gross Total: " width="150px" />
-                                        <Input liveChange="changeAmountInvoice" value="0"
+                                        <Input submit="changeAmountInvoice" value="0"
                                             width="100px"
                                             textAlign="Right"
                                             id="invoice_amount" class='fs-1' />

@@ -7,13 +7,30 @@
 
             <Table id="idTable" sticky="ColumnHeaders"
                 growing="true" growingThreshold="20"
-                items="{/results}">
+                items="{
+                    path: '/results',
+                    events: {
+                      change: '.onChange'
+                    }
+                  }">
                 <headerToolbar>
                     <OverflowToolbar>
                         <content>
                             <Title id="tableHeader" text="" level="H2" />
                             <ToolbarSpacer />
-                            <Button text='Add +' type='Emphasized' press="onAdd" />
+                            <Input
+                                id="productInput"
+                                width="200px"
+                                placeholder="Enter id"
+                                suggestionItemSelected="filterTable"
+                                submit="filterTable"
+                                showSuggestion="true"
+                                suggestionItems="{/results}">
+                                <suggestionItems>
+                                    <core:Item text="{invoice_id}" />
+                                </suggestionItems>
+                            </Input>
+                            <Button text='Create     +' type='Emphasized' press="onAdd" />
                         </content>
                     </OverflowToolbar>
                 </headerToolbar>

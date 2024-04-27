@@ -28,7 +28,7 @@ sap.ui.define(
                     alert("Printing")
                 }
             },
-            _handleRouteMatched: function (oEvent) {
+            _handleRouteMatched: async function (oEvent) {
                 var data = this.getUserLog();
                 if (!data) {
                     // alert('user logged in');
@@ -44,9 +44,39 @@ sap.ui.define(
                     }
                 }
 
+                var default_rate = await localStorage.getItem("gold_rate");
+                this.getView().byId("gold_rate").setValue(default_rate);
+
 
             },
+            calRate: async function () {
+                var default_rate = this.getView().byId("gold_rate").getValue();
+                if (default_rate) {
+                    var grams = this.getView().byId("grams").getValue();
+                    var data = this.getView().getModel().getData().results;
+                    var total_grams = 0;
+                    var total_cash = 0;
+                    data.forEach(val => {
+                        total_grams += parseFloat(val.amount / val.rate);
+                        total_cash += parseFloat(val.amount);
+                    })
+                    total_grams = total_grams.toFixed(2)
+                    var remainingGrams = parseFloat(grams) - parseFloat(total_grams);
+                    var remainingAmount = remainingGrams * parseFloat(default_rate);
+                    remainingAmount = remainingAmount.toFixed(2);
+                    var final_rate = (total_cash + parseFloat(remainingAmount)) / parseFloat(grams);
+                    this.getView().byId("rate").setText("Final Rate: " + final_rate);
+                }
+                else {
+                    alert("Current gold rate not found")
+                }
 
+
+            },
+            getgram: function (rate, amount) {
+                console.log(rate, amount)
+                return (amount / rate).toFixed(2)
+            },
             refreshData: function (oId) {
                 var that = this;
                 var host = this.getHost();
@@ -90,7 +120,9 @@ sap.ui.define(
                 if (sPreviousHash !== undefined) {
                     window.history.go(-1);
                 } else {
-                    this.oRouter.navTo("OrderList");
+                    this.oRouter.navTo("OrderList", {
+                        order_id: "null"
+                    });
                 }
 
             },
@@ -144,6 +176,7 @@ sap.ui.define(
 
 
             getHTMLContent: function (data) {
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.amount))
                 return `<!DOCTYPE html>
                 <html lang="en">
                 
@@ -229,7 +262,6 @@ sap.ui.define(
                                                     <tr>
                                                         <th class="table_width_2">Item</th>
                                                         <th class="table_width_1">HSN</th>
-                                                        <th class="table_width_1 text-center">Rate</th>
                                                         <th class="table_width_1 text-center">AMOUNT</th>
                                                     </tr>
                                                 </thead>
@@ -237,7 +269,6 @@ sap.ui.define(
                                                 <tr>
                                                     <td class="">${data.type}</td>
                                                     <td class="table-description">${data.HSN}</td>
-                                                    <td class="text-center">${data.rate}</td>
                                                     <td class="text-center">${data.amount}</td>
                                                    
                                                 </tr>
@@ -256,7 +287,7 @@ sap.ui.define(
                    <tbody>
                        <tr>
                            <td>CASH</td>
-                           <td>: ${data.amount}</td>
+                           <td>: ${data.cash}</td>
                        </tr>
                        <tr>
                            <td>CHEQUE</td>
@@ -264,7 +295,7 @@ sap.ui.define(
                        </tr>
                        <tr>
                            <td>CARD</td>
-                           <td>: ${data.card}${data.apprcode ? ` Approval Code: ${data.apprcode})` : ''}</td>
+                           <td>: ${data.card}${data.apprcode ? ` Approval Code: ${data.apprcode}` : ''}</td>
                        </tr>
                        <tr>
                            <td>UPI</td>
@@ -272,14 +303,18 @@ sap.ui.define(
                        </tr>
                        <tr>
                            <td>BANK TRF</td>
-                           <td>: ${data.bank}${data.bankdetails ? ` (${data.bankdetails})` : ''}</td>
+                           <td>: ${data.bank}${data.bank_details ? ` (${data.bank_details})` : ''}</td>
                        </tr>
                        <tr>
                        <td>OLD GOLD ADJ</td>
-                       <td>: ${data.old_gold_amount}</td>
+                       <td>: ${data.oldgold}</td>
                    </tr>
                    </tbody>
                </table>
+               <br/>
+               <div>
+               <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
+               </div>
                    </div>
                    <div class="table-footer-right">
                        <table class="totalamt-table">
@@ -326,7 +361,95 @@ html2pdf(staticContent,{ filename: "Advance-voucher:"+${data.order_id} });
 }
 </script>
 </html>`;
-            }
+            },
+            convertToIndianWords: function (number) {
+                var that = this;
+                const words = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+                const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+                function convertThousands(num) {
+                    const quotient = Math.floor(num / 1000);
+                    const remainder = num % 1000;
+
+                    let result = "";
+                    if (quotient > 0) {
+                        result += that.convertToIndianWords(quotient) + " thousand ";
+                    }
+
+                    if (remainder > 0) {
+                        result += convertHundreds(remainder);
+                    }
+
+                    return result.trim();
+                }
+
+                function convertHundreds(num) {
+                    if (num >= 100) {
+                        const remainder = num % 100;
+                        if (remainder !== 0) {
+                            return words[Math.floor(num / 100)] + " hundred " + convertTens(remainder);
+                        } else {
+                            return words[Math.floor(num / 100)] + " hundred";
+                        }
+                    } else {
+                        return convertTens(num);
+                    }
+                }
+
+                function convertTens(num) {
+                    if (num < 10) {
+                        return words[num];
+                    } else if (num >= 11 && num <= 19) {
+                        return teens[num - 10];
+                    } else {
+                        return tens[Math.floor(num / 10)] + " " + words[num % 10];
+                    }
+                }
+
+                if (number === 0) {
+                    return "zero";
+                } else if (number < 1000) {
+                    return convertHundreds(number);
+                } else {
+                    return convertThousands(number);
+                }
+            },
+
+            convertNumberToWordsIndianSystem: function (number) {
+                const lakh = 100000;
+
+                if (number < 0 || isNaN(number) || !Number.isInteger(number)) {
+                    return "Invalid input";
+                }
+
+                if (number === 0) {
+                    return "zero";
+                }
+
+                let result = "";
+
+                // Convert lakh part
+                const lakhPart = Math.floor(number / lakh);
+                if (lakhPart > 0) {
+                    result += this.convertToIndianWords(lakhPart) + " lakh ";
+                }
+
+                // Convert remaining part
+                const remainingPart = number % lakh;
+                if (remainingPart > 0) {
+                    result += this.convertToIndianWords(remainingPart);
+                }
+                result = result.trim();
+                var aResult = result.split(" ");
+                var aUpper = [];
+                aResult.map(val => {
+                    aUpper.push(val[0].toUpperCase() + val.substr(1));
+                });
+                aUpper.push("Rupees Only")
+
+                return aUpper.join(" ");
+            },
 
         });
     }

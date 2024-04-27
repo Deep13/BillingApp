@@ -9,14 +9,17 @@
                 growing="true" growingThreshold="20"
                 items="{/results}">
                 <headerToolbar>
-                    <OverflowToolbar>
+                    <Toolbar>
                         <content>
                             <Title id="tableHeader" text="" level="H2" />
                             <ToolbarSpacer />
+                            <Text id="rate" text="" />
+                            <Input id="grams" width="100px" placeholder="Grams" submit="calRate" />
+                            <Input id="gold_rate" width="100px" placeholder="Gold Rate" />
                             <Button icon="sap-icon://print"
                                 press="onPressPrintAll" tooltip="Print" />
                         </content>
-                    </OverflowToolbar>
+                    </Toolbar>
                 </headerToolbar>
                 <columns>
                     <Column hAlign="Center">
@@ -29,7 +32,29 @@
                         <Label text="Gold Rate" />
                     </Column>
                     <Column hAlign="Center">
-                        <Label text="Amount" />
+                        <Label text="Cash" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Card" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="UPI" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Bank" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Cheque" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Old Gold" />
+                    </Column>
+                    <Column hAlign="Center">
+                        <Label text="Total Amount" />
+                    </Column>
+
+                    <Column hAlign="Center">
+                        <Label text="Gram" />
                     </Column>
                     <Column hAlign="Center">
                         <Label text="" />
@@ -41,7 +66,19 @@
                             <Text text="{id}" />
                             <Text text="{voucher_date}" />
                             <Text text="{rate}" />
+                            <Text text="{cash}" />
+                            <Text text="{card}" />
+                            <Text text="{upi}" />
+                            <Text text="{bank}" />
+                            <Text text="{cheque}" />
+                            <Text text="{oldgold}" />
                             <Text text="{amount}" />
+                            <Text
+                                text="{parts: [
+                                'rate',
+                                'amount'
+                            ],
+                            formatter: '.getgram'}" />
                             <Button icon="sap-icon://print"
                                 press="onPressPrint" tooltip="Print" />
                         </cells>

@@ -31,3 +31,15 @@
 .fs-1 {
   font-size: 1rem;
 }
+.marginTopLabel label {
+  margin-top: 10px;
+}
+
+.table-footer-left span {
+  color: black;
+  font-weight: 600;
+}
+.table-footer-left td {
+  color: black;
+  font-weight: 600;
+}

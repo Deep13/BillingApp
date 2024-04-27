@@ -26,7 +26,7 @@ sap.ui.define(
                 this.getView().byId("upi").setValue(0);
                 this.getView().byId("card").setValue(0);
                 this.getView().byId("bank").setValue(0);
-                this.getView().byId("amount").setValue(0);
+                // this.getView().byId("amount").setValue(0);
                 this.getView().byId("totamount").setText(0);
                 this.getView().byId("addt").setValue('');
                 this.getView().byId("chequeno").setValue('');
@@ -40,7 +40,7 @@ sap.ui.define(
                 this.getView().byId("card").setValue(0);
                 this.getView().byId("bank").setValue(0);
             },
-            _handleRouteMatched: function (oEvent) {
+            _handleRouteMatched: async function (oEvent) {
                 var date = new Date();
                 this.reset();
                 var that = this;
@@ -127,6 +127,7 @@ sap.ui.define(
                         success: function (dataClient) {
                             try {
                                 var aDataId = JSON.parse(dataClient);
+                                aDataId.push({ id: '0', item: 'N/A' })
                                 var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
                                 that.getView().setModel(jModelID, "idModel")
                             }
@@ -221,7 +222,7 @@ sap.ui.define(
                         }
                     });
                     this.getView().getModel().refresh(true);
-                    var rate_default = that.getOwnerComponent().getModel("SellerModel")?.getProperty("/gold_rate");
+                    var rate_default = await localStorage.getItem("gold_rate");
                     var jModelB = new sap.ui.model.json.JSONModel({ rate: rate_default });
                     this.getView().setModel(jModelB, "buyer")
                 }
@@ -230,12 +231,26 @@ sap.ui.define(
 
             calVal: function () {
                 var old = this.getView().byId('oldgold').getValue();
-                var adamount = this.getView().byId('amount').getValue();
+                var cash = this.getView().byId("cash").getValue();
+                var cheque = this.getView().byId("cheque").getValue();
+                var upi = this.getView().byId("upi").getValue();
+                var card = this.getView().byId("card").getValue();
+                var bank = this.getView().byId("bank").getValue();
+                var adamount = parseFloat(cash) + parseFloat(cheque) + parseFloat(upi) + parseFloat(card) + parseFloat(bank);
                 this.getView().byId('totamount').setText(parseFloat(old) + parseFloat(adamount));
-                this.getView().byId('cash').setValue(parseFloat(old) + parseFloat(adamount));
-                this.clearAll();
+                // this.getView().byId('cash').setValue(parseFloat(old) + parseFloat(adamount));
+                // this.clearAll();
             },
-
+            changeID: function (oEvent) {
+                this.getView().byId("id_val").setValue("");
+                var selected = oEvent.getParameter("selectedItem").getKey();
+                if (selected == "N/A") {
+                    this.getView().byId("id_val").setEnabled(false);
+                }
+                else {
+                    this.getView().byId("id_val").setEnabled(true);
+                }
+            },
             adjustBal: function () {
                 var amount = this.getView().byId("totamount").getText();
                 if (amount) {
@@ -273,16 +288,17 @@ sap.ui.define(
                             method: "getCustomerByContact",
                             data: JSON.stringify({ contact_number: cn }),
                         },
-                        success: function (dataClient) {
+                        success: async function (dataClient) {
                             try {
                                 var aDataId = JSON.parse(dataClient);
+                                aDataId.rate = await localStorage.getItem("gold_rate");
                                 console.log(aDataId);
                                 sap.ui.core.BusyIndicator.hide();
                                 if (aDataId.id) {
                                     that.getView().getModel("buyer").setData(aDataId)
                                 }
                                 else {
-                                    that.getView().getModel("buyer").setData({ contact_number: cn })
+                                    that.getView().getModel("buyer").setData({ contact_number: cn, rate: aDataId.rate })
                                 }
                             }
                             catch (e) {
@@ -317,7 +333,7 @@ sap.ui.define(
                 var upi = this.getView().byId("upi").getValue();
                 var card = this.getView().byId("card").getValue();
                 var bank = this.getView().byId("bank").getValue();
-                var amount = this.getView().byId("amount").getValue();
+                // var amount = this.getView().byId("amount").getValue();
                 var total_amount = this.getView().byId("totamount").getText();
                 var addt = this.getView().byId("addt").getValue();
                 var chequeno = this.getView().byId("chequeno").getValue();
@@ -349,7 +365,7 @@ sap.ui.define(
                             city_pin: buyerDetails.pincode,
                             notes: addt,
                             total_amount: total_amount,
-                            adv_amount: amount,
+                            adv_amount: total_amount,
                             type: om_type,
                             purity: purity,
                             rate: rate,
@@ -377,9 +393,19 @@ sap.ui.define(
                                 method: "insertVoucher",
                                 data: JSON.stringify({
                                     order_id: order_id,
-                                    amount: amount,
+                                    amount: total_amount,
                                     voucher_date: order_date,
                                     rate: rate,
+                                    cash: cash,
+                                    card: card,
+                                    cheque: cheque,
+                                    bank: bank,
+                                    upi: upi,
+                                    oldgold: oldgold,
+                                    apprcode: apprcode,
+                                    chequeno: chequeno,
+                                    bank_details: bankdetails,
+                                    upidetails: upidetails,
                                 }),
                             },
                             success: function (dataClient) {
@@ -413,7 +439,9 @@ sap.ui.define(
             },
 
             onpressBack: function (oEvent) {
-                this.oRouter.navTo("OrderList");
+                this.oRouter.navTo("OrderList", {
+                    order_id: "null"
+                });
             },
 
         });

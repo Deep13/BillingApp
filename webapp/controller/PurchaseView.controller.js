@@ -234,6 +234,13 @@ sap.ui.define(
                                     order_id: order_id,
                                     amount: amount,
                                     voucher_date: order_date,
+                                    rate: rate,
+                                    cash: cash,
+                                    card: card,
+                                    cheque: cheque,
+                                    bank: bank,
+                                    upi: upi,
+                                    oldgold: oldgold,
                                 }),
                             },
                             success: function (dataClient) {
@@ -267,7 +274,9 @@ sap.ui.define(
             },
 
             onpressBack: function (oEvent) {
-                this.oRouter.navTo("OrderList");
+                this.oRouter.navTo("PurchaseList", {
+                    purchase_id: "null"
+                });
             },
 
         });

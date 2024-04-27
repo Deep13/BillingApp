@@ -18,7 +18,7 @@ sap.ui.define(
 
 
             },
-            _handleRouteMatched: function () {
+            _handleRouteMatched: function (oEvent) {
                 var data = this.getUserLog();
                 if (!data) {
                     // alert('user logged in');
@@ -26,6 +26,10 @@ sap.ui.define(
                 }
                 else {
                     this.refreshData();
+                    this.pId = oEvent.getParameter('arguments').purchase_id;
+                    if (this.pId == "null") {
+                        this.getView().byId("productInput").setValue("");
+                    }
                 }
 
             },
@@ -132,7 +136,7 @@ sap.ui.define(
                 var host = this.getHost();
                 sap.ui.core.BusyIndicator.show();
                 console.log(data);
-
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.total_amount))
                 sap.ui.core.BusyIndicator.hide();
                 // Open a new popup window
                 var printContent = `<!DOCTYPE html>
@@ -272,9 +276,15 @@ sap.ui.define(
                                <td>ORDER ADJ. </td>
                                <td>: ${data.adjo}${data.adjonumber ? ` (ORDER NO:- ${data.adjonumber})` : ''}</td>
                            </tr>
+                           
                        </tbody>
                    </table>
+                   <br/>
+                   <div>
+                   <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
                    </div>
+                   </div>
+                  
                    <div class="text-end table-footer-right">
                    <table class="totalamt-table">
                    <tbody>
@@ -331,7 +341,117 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 // Trigger the print action in the new window
                 popupWindow.print();
 
-            }
+            },
+            filterTable: function () {
+                var value = this.getView().byId("productInput").getValue();
+                var oTable = this.byId("idTable"),
+                    oBinding = oTable.getBinding("items"),
+                    aFilters = [];
+
+                var oFilter = new sap.ui.model.Filter("id", "Contains", value,);
+                aFilters.push(oFilter);
+
+                // apply filter settings
+                oBinding.filter(aFilters);
+            },
+            onChange: function () {
+
+                if (this.pId !== "null") {
+
+                    this.getView().byId("productInput").setValue(this.pId);
+                    this.pId = "null";
+                    this.getView().byId("productInput").fireSubmit();
+
+                }
+            },
+            convertToIndianWords: function (number) {
+                var that = this;
+                const words = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+                const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+                function convertThousands(num) {
+                    const quotient = Math.floor(num / 1000);
+                    const remainder = num % 1000;
+
+                    let result = "";
+                    if (quotient > 0) {
+                        result += that.convertToIndianWords(quotient) + " thousand ";
+                    }
+
+                    if (remainder > 0) {
+                        result += convertHundreds(remainder);
+                    }
+
+                    return result.trim();
+                }
+
+                function convertHundreds(num) {
+                    if (num >= 100) {
+                        const remainder = num % 100;
+                        if (remainder !== 0) {
+                            return words[Math.floor(num / 100)] + " hundred " + convertTens(remainder);
+                        } else {
+                            return words[Math.floor(num / 100)] + " hundred";
+                        }
+                    } else {
+                        return convertTens(num);
+                    }
+                }
+
+                function convertTens(num) {
+                    if (num < 10) {
+                        return words[num];
+                    } else if (num >= 11 && num <= 19) {
+                        return teens[num - 10];
+                    } else {
+                        return tens[Math.floor(num / 10)] + " " + words[num % 10];
+                    }
+                }
+
+                if (number === 0) {
+                    return "zero";
+                } else if (number < 1000) {
+                    return convertHundreds(number);
+                } else {
+                    return convertThousands(number);
+                }
+            },
+
+            convertNumberToWordsIndianSystem: function (number) {
+                const lakh = 100000;
+
+                if (number < 0 || isNaN(number) || !Number.isInteger(number)) {
+                    return "Invalid input";
+                }
+
+                if (number === 0) {
+                    return "zero";
+                }
+
+                let result = "";
+
+                // Convert lakh part
+                const lakhPart = Math.floor(number / lakh);
+                if (lakhPart > 0) {
+                    result += this.convertToIndianWords(lakhPart) + " lakh ";
+                }
+
+                // Convert remaining part
+                const remainingPart = number % lakh;
+                if (remainingPart > 0) {
+                    result += this.convertToIndianWords(remainingPart);
+                }
+                result = result.trim();
+                var aResult = result.split(" ");
+                var aUpper = [];
+                aResult.map(val => {
+                    aUpper.push(val[0].toUpperCase() + val.substr(1));
+                });
+                aUpper.push("Rupees Only")
+
+                return aUpper.join(" ");
+            },
 
         });
     }
