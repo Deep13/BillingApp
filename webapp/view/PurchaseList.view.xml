@@ -58,7 +58,7 @@
                     </Column>
                 </columns>
                 <items>
-                    <ColumnListItem type="Navigation">
+                    <ColumnListItem type="Navigation" press="onEditPurchase">
                         <cells>
                             <Text text="{id}" />
                             <Text text="{purchase_date}" />

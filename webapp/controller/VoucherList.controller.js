@@ -1,6 +1,6 @@
 sap.ui.define(
-    ["../controller/BaseController", "sap/ui/model/json/JSONModel", "sap/ui/core/routing/History", "sap/m/Button", "sap/m/Input", "sap/m/Label", "sap/m/library", "sap/m/MessageBox",],
-    function (Controller, JSONModel, History, Button, Input, Label, mobileLibrary, MessageBox) {
+    ["../controller/BaseController", "sap/ui/model/json/JSONModel", "sap/ui/core/routing/History", "sap/m/Dialog", "sap/m/Button", "sap/m/Input", "sap/m/Label", "sap/m/library", "sap/m/MessageBox", "sap/m/HBox"],
+    function (Controller, JSONModel, History, Dialog, Button, Input, Label, mobileLibrary, MessageBox, HBox) {
         "use strict";
         var ButtonType = mobileLibrary.ButtonType;
         var DialogType = mobileLibrary.DialogType;
@@ -30,6 +30,8 @@ sap.ui.define(
             },
             _handleRouteMatched: async function (oEvent) {
                 var data = this.getUserLog();
+                var jData = new sap.ui.model.json.JSONModel({ results: [] });
+                this.getView().setModel(jData);
                 if (!data) {
                     // alert('user logged in');
                     this.oRouter.navTo("");
@@ -38,9 +40,9 @@ sap.ui.define(
 
                     // register the handler 
                     document.addEventListener('keyup', this.doc_keyUp, false);
-                    var oId = oEvent.getParameter('arguments').order_id;
-                    if (oId) {
-                        this.refreshData(oId);
+                    this.oId = oEvent.getParameter('arguments').order_id;
+                    if (this.oId) {
+                        this.refreshData(this.oId);
                     }
                 }
 
@@ -95,12 +97,12 @@ sap.ui.define(
                             if (dataClient) {
                                 var aData = JSON.parse(dataClient);
                                 that.getView().byId('tableHeader').setText(`Vouchers (${aData.length})`)
-                                var jData = new sap.ui.model.json.JSONModel({ results: aData });
-                                that.getView().setModel(jData);
+                                that.getView().getModel().setData({ results: aData });
+                                that.getView().getModel().refresh;
                             }
                             else {
-                                var jData = new sap.ui.model.json.JSONModel({ results: [] });
-                                that.getView().setModel(jData);
+                                that.getView().getModel().setData({ results: [] });
+                                that.getView().getModel().refresh;
                             }
                         }
                         catch (e) {
@@ -112,7 +114,206 @@ sap.ui.define(
                     }
                 });
             },
+            onEdit: function (oEvent) {
+                var that = this;
+                var host = this.getHost();
+                var voucher = oEvent.getSource().getBindingContext().getObject();
+                if (!this.oSubmitDialog) {
+                    this.oSubmitDialog = new Dialog({
+                        type: DialogType.Message,
+                        title: "Confirm",
+                        contentWidth: "500px",
+                        content: [
+                            new Label({
+                                text: "Enter Gold rate",
+                                labelFor: "goldRate"
+                            }),
+                            new Input("goldRate", {
+                                width: "100%",
+                                value: voucher.rate,
+                                placeholder: "Add rate",
+                                liveChange: function (oEvent) {
+                                    var sText = oEvent.getParameter("value");
+                                    voucher.rate = sText;
+                                }.bind(this)
+                            }),
+                            new Label({
+                                text: "Enter Old Gold amount",
+                                labelFor: "submissionNote"
+                            }),
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotecoldgold", {
+                                    placeholder: "Add amount (required)",
+                                    value: voucher.oldgold,
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.oldgold = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNoteoldgoldDeatils", {
+                                    width: "250px",
+                                    value: voucher.purchase_id,
+                                    placeholder: "Approval Code",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.purchase_id = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                            new Label({
+                                text: "Enter Cash amount",
+                                labelFor: "submissionNote"
+                            }),
+                            new Input("submissionNote", {
+                                width: "100%",
+                                placeholder: "Add amount (required)",
+                                value: voucher.cash,
+                                liveChange: function (oEvent) {
+                                    var sText = oEvent.getParameter("value");
+                                    voucher.cash = sText;
+                                }.bind(this)
+                            }),
+                            new Label({
+                                text: "Enter Card amount",
+                                labelFor: "submissionNotecard"
+                            }),
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotecard", {
+                                    placeholder: "Add amount (required)",
+                                    value: voucher.card,
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.card = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotecardDeatils", {
+                                    width: "250px",
+                                    value: voucher.apprcode,
+                                    placeholder: "Approval Code",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.apprcode = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                            new Label({
+                                text: "Enter Bank amount",
+                                labelFor: "submissionNotebank"
+                            }),
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotebank", {
+                                    width: "100%",
+                                    placeholder: "Add amount (required)",
+                                    value: voucher.bank,
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.bank = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotebankDeatils", {
+                                    width: "250px",
+                                    value: voucher.bank_details,
+                                    placeholder: "Bank Details",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.bank_details = sText;
+                                    }.bind(this)
+                                })]
+                            }),
 
+                            new Label({
+                                text: "Enter Cheque amount",
+                                labelFor: "submissionNotecheque"
+                            }),
+
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotecheque", {
+                                    width: "100%",
+                                    placeholder: "Add amount (required)",
+                                    value: voucher.cheque,
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.cheque = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotechequeDeatils", {
+                                    width: "250px",
+                                    value: voucher.chequeno,
+                                    placeholder: "Cheque Number",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.chequeno = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                            new Label({
+                                text: "Enter Upi amount",
+                                labelFor: "submissionNoteupi"
+                            }),
+
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNoteupi", {
+                                    width: "100%",
+                                    value: voucher.upi,
+                                    placeholder: "Add amount (required)",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.upi = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNoteupiDeatils", {
+                                    width: "250px",
+                                    value: voucher.upidetails,
+                                    placeholder: "UPI Details",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        voucher.upidetails = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                        ],
+                        beginButton: new Button({
+                            type: ButtonType.Emphasized,
+                            text: "Submit",
+                            press: function (oEvent) {
+                                var sText = voucher;
+                                sText.amount = parseFloat(sText.oldgold) + parseFloat(sText.cash) + parseFloat(sText.card) + parseFloat(sText.bank) + parseFloat(sText.upi) + parseFloat(sText.cheque);
+                                this.oSubmitDialog.destroy();
+                                this.oSubmitDialog = undefined;
+                                if (sText) {
+                                    sap.ui.core.BusyIndicator.show();
+                                    $.ajax({
+                                        url: host,
+                                        type: "POST",
+                                        data: {
+                                            method: "updateVoucher",
+                                            data: JSON.stringify(sText),
+                                        },
+                                        success: function (dataClient) {
+                                            sap.ui.core.BusyIndicator.hide();
+                                            MessageBox.success("Succesfully Updated");
+                                            that.refreshData(that.oId);
+                                        },
+                                        error: function (request, error) {
+                                            console.log('Error');
+                                            sap.ui.core.BusyIndicator.hide();
+                                        },
+                                    });
+                                }
+                            }.bind(this)
+                        }),
+                        endButton: new Button({
+                            text: "Cancel",
+                            press: function () {
+                                this.oSubmitDialog.destroy();
+                                this.oSubmitDialog = undefined;
+                            }.bind(this)
+                        })
+                    });
+                }
+                this.oSubmitDialog.addStyleClass("marginTopLabel")
+                this.oSubmitDialog.open();
+            },
             onpressBack: function (oEvent) {
                 const oHistory = History.getInstance();
                 const sPreviousHash = oHistory.getPreviousHash();
@@ -183,7 +384,7 @@ sap.ui.define(
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">

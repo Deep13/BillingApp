@@ -35,7 +35,8 @@
                     </f:toolbar>
                     <f:content>
                         <Label text="Contact No." />
-                        <Input id="contact" value="{buyer>/contact_number}" submit="onContactNumber" />
+                        <Input id="contact" value="{buyer>/contact_number}" submit="onContactNumber"
+                            liveChange="onTabPress" />
                         <Label text="Name" />
                         <Input id="name" value="{buyer>/name}" />
                         <Label text="Address" />

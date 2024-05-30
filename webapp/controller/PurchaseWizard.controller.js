@@ -36,6 +36,10 @@ sap.ui.define(
                 var data = this.getUserLog();
                 var that = this;
                 var host = this.getHost();
+                this.getView().byId("contact").onsapfocusleave = function (e) {
+
+                    e.srcControl.fireSubmit();
+                }
                 this._wizard.invalidateStep(this.byId("PurchaseStep"));
                 this.getView().byId("om_type").setSelectedKey("");
                 this.getView().byId("purity").setSelectedKey("");
@@ -284,10 +288,12 @@ sap.ui.define(
                                 console.log(aDataId);
                                 sap.ui.core.BusyIndicator.hide();
                                 if (aDataId.id) {
-                                    that.getView().getModel("buyer").setData(aDataId)
+                                    that.getView().getModel("buyer").setData(aDataId);
+                                    that.isnewCustomer = false;
                                 }
                                 else {
-                                    that.getView().getModel("buyer").setData({ contact_number: cn })
+                                    that.getView().getModel("buyer").setData({ contact_number: cn });
+                                    that.isnewCustomer = true;
                                 }
                             }
                             catch (e) {
@@ -304,16 +310,20 @@ sap.ui.define(
             },
 
 
-            calValue: function () {
+            calValue: function (oEvent) {
                 var rate = this.getView().byId('rate').getValue();
                 rate = parseFloat(rate);
                 if (!(rate > 0)) {
                     rate = 0;
                 }
-                var products = this.getView().getModel("Products").getProperty("/results");
-                products.map(value => {
-                    value.amount = ((parseFloat(value.net_wt) ? parseFloat(value.net_wt) : 0) * rate);
-                });
+                var net = oEvent.getParameter("value");
+                var curr = oEvent.getSource().getBindingContext("Products").getObject();
+                curr.net_wt = net;
+                curr.amount = ((parseFloat(curr.net_wt) ? parseFloat(curr.net_wt) : 0) * rate);
+                // var products = this.getView().getModel("Products").getProperty("/results");
+                // products.map(value => {
+                //     value.amount = ((parseFloat(value.net_wt) ? parseFloat(value.net_wt) : 0) * rate);
+                // });
                 this.getView().getModel("Products").refresh(true);
                 this.calAddt();
             },
@@ -326,7 +336,7 @@ sap.ui.define(
                     totalVal += parseFloat(value.amount);
                 });
                 if (totalVal && totalVal > 0) {
-                    this.getView().byId("amount").setText(totalVal);
+                    this.getView().byId("amount").setText(Math.round(totalVal));
                 }
                 else {
                     this.getView().byId("amount").setText(0);
@@ -335,8 +345,20 @@ sap.ui.define(
                 }
                 this.onresetPayment();
             },
+            onPressRemoveInvoice: function (oEvent) {
+                var index = oEvent.getSource().getBindingContext("InvoiceModel").getPath().split("/results/")[1];
+                index = parseInt(index);
+                var products = this.getView().getModel("InvoiceModel").getProperty("/results");
+                products.splice(index, 1);
+                this.getView().getModel("InvoiceModel").refresh(true);
+                this.calValueInvoice();
 
-
+            },
+            onTabPress: function (oEvent) {
+                oEvent.getSource().onsapfocusleave = function (e) {
+                    e.srcControl.fireSubmit();
+                }
+            },
 
 
             onresetPayment: function () {
@@ -375,15 +397,24 @@ sap.ui.define(
 
             },
             onPressRemove: function (oEvent) {
+                var rate = this.getView().byId('rate').getValue();
+                rate = parseFloat(rate);
+                if (!(rate > 0)) {
+                    rate = 0;
+                }
                 var index = oEvent.getSource().getBindingContext("Products").getPath().split("/results/")[1];
                 index = parseInt(index);
                 var products = this.getView().getModel("Products").getProperty("/results");
                 products.splice(index, 1);
+                products.map(value => {
+                    value.amount = ((parseFloat(value.net_wt) ? parseFloat(value.net_wt) : 0) * rate);
+                });
                 this.getView().getModel("Products").refresh(true);
-                this.calValue();
+                this.calAddt();
 
             },
             getInvoiceNumber: function () {
+
                 var that = this;
                 var host = this.getHost();
                 $.ajax({
@@ -427,6 +458,9 @@ sap.ui.define(
                     if (!adjp) {
                         adjp = 0;
                     }
+                    else {
+                        this.getInvoiceNumber();
+                    }
                     var cash = this.getView().byId("cash").getValue();
                     if (!cash) {
                         cash = 0;
@@ -436,6 +470,43 @@ sap.ui.define(
                 }
                 this.checkValidStep();
             },
+            checkOrderValid: function () {
+                var that = this;
+                var host = this.getHost();
+                var adjo = this.getView().byId("adjo").getValue();
+                var adjonumber = this.getView().byId("adjonumber").getValue();
+                $.ajax({
+                    url: host,
+                    type: "POST",
+                    data: {
+                        method: "checkfororderid",
+                        data: JSON.stringify({
+                            order_id: adjonumber
+                        })
+                    },
+                    success: function (dataClient) {
+                        try {
+                            if (dataClient) {
+                                var aDataId = JSON.parse(dataClient);
+                                if (aDataId[0] && aDataId[0].status == 0) {
+                                    MessageBox.information("Order id " + adjonumber + " is already used");
+                                    that.getView().byId("adjonumber").setValue("");
+                                }
+                                that.checkValidStep();
+
+                            }
+                        }
+                        catch (e) {
+                            alert("Something went wrong", e)
+                        }
+                    },
+                    error: function (request, error) {
+                        console.log('Error')
+                    }
+                });
+
+            },
+
             goToPaymentStep: function () {
                 this.isnewOrder = false;
                 var that = this;
@@ -548,7 +619,9 @@ sap.ui.define(
 
             },
             onpressBack: function (oEvent) {
-                this.oRouter.navTo("PurchaseList");
+                this.oRouter.navTo("PurchaseList", {
+                    "purchase_id": "null"
+                });
             },
             checkValidStep: function () {
                 this._wizard.discardProgress(this.byId("PurchaseStep"));
@@ -592,6 +665,39 @@ sap.ui.define(
                     }.bind(this)
                 });
             },
+            onSaveCustomer: function () {
+                var that = this;
+                var host = this.getHost();
+                var buyerDetails = this.getView().getModel("buyer").getData();
+                var state = null;
+                if (buyerDetails.state_code) {
+                    state = this.getView().getModel("stateModel").getData().results.filter(val => val.id == buyerDetails.state_code)[0].item
+                }
+                $.ajax({
+                    url: host,
+                    type: "POST",
+                    data: {
+                        method: "insertCustomer",
+                        data: JSON.stringify({
+                            contact_number: buyerDetails.contact_number,
+                            address: buyerDetails.address,
+                            name: buyerDetails.name,
+                            id_type: buyerDetails.id_type,
+                            id_value: buyerDetails.id_value,
+                            gst_number: buyerDetails.gst_number,
+                            state: state,
+                            pincode: buyerDetails.pincode,
+                            state_code: buyerDetails.state_code
+                        }),
+                    },
+                    success: function (dataClient) {
+                        console.log(dataClient);
+                    },
+                    error: function (request, error) {
+                        console.log('Error');
+                    },
+                });
+            },
             onSavePurchase: function () {
 
                 var that = this;
@@ -620,6 +726,9 @@ sap.ui.define(
                 var sgst = 0;
                 var amount = this.getView().byId("amount").getText();
                 var taxamount = 0;
+                if (this.isnewCustomer) {
+                    this.onSaveCustomer();
+                }
                 $.ajax({
                     url: host,
                     type: "POST",
@@ -908,7 +1017,9 @@ sap.ui.define(
                                 that.oDefaultDialog.close();
                                 that.oDefaultDialog.destroy();
                                 that.oDefaultDialog = undefined;
-                                that.oRouter.navTo("PurchaseList");
+                                that.oRouter.navTo("PurchaseList", {
+                                    purchase_id: "null"
+                                });
                             }.bind(that)
                         })
                     });
@@ -985,7 +1096,7 @@ sap.ui.define(
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -1208,10 +1319,25 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
             calVal: function () {
                 var old = this.getView().byId('order_oldgold').getValue();
                 var cash = this.getView().byId("order_cash").getValue();
+                if (!cash) {
+                    cash = 0;
+                }
                 var cheque = this.getView().byId("order_cheque").getValue();
+                if (!cheque) {
+                    cheque = 0;
+                }
                 var upi = this.getView().byId("order_upi").getValue();
+                if (!upi) {
+                    upi = 0;
+                }
                 var card = this.getView().byId("order_card").getValue();
+                if (!card) {
+                    card = 0;
+                }
                 var bank = this.getView().byId("order_bank").getValue();
+                if (!bank) {
+                    bank = 0;
+                }
                 var adamount = parseFloat(cash) + parseFloat(cheque) + parseFloat(upi) + parseFloat(card) + parseFloat(bank);
                 this.getView().byId('order_totamount').setText(parseFloat(old) + parseFloat(adamount));
             },
@@ -1396,6 +1522,8 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                         chequeno: chequeno,
                                         bank_details: bankdetails,
                                         upidetails: upidetails,
+                                        purchase_id: purchase_id
+
                                     }),
                                 },
                                 success: function (dataClient) {
@@ -1440,6 +1568,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                 bank: bank,
                                 upi: upi,
                                 oldgold: oldgold,
+                                purchase_id: purchase_id
                             }),
                         },
                         success: function (dataClient) {
@@ -1577,7 +1706,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -1764,7 +1893,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -2038,6 +2167,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                     data: reqData,
                                 },
                                 success: function (dataClient) {
+                                    that.updateStock(productDetails);
                                     console.log(dataClient);
                                     sap.ui.core.BusyIndicator.hide();
                                 },
@@ -2059,6 +2189,30 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                         sap.ui.core.BusyIndicator.hide();
                     },
                 });
+            },
+
+
+
+            updateStock: function (productDetails) {
+                var that = this;
+                var host = this.getHost();
+                $.ajax({
+                    url: host,
+                    type: "POST",
+                    data: {
+                        method: "updateSold",
+                        data: JSON.stringify({
+                            data: productDetails
+                        }),
+                    },
+                    success: function (dataClient) {
+                        console.log(dataClient);
+                    },
+                    error: function (request, error) {
+                        console.log('Error');
+                    },
+                });
+
             },
             onInputCode: function (oEvent) {
                 var omcode = oEvent.getSource().getValue();
@@ -2187,6 +2341,8 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                     this.getView().byId("invoice_cash").setValue((totalAmount + roundoff).toFixed(2));
                 }
                 else {
+                    this.getView().byId("totamount").setText(0);
+
                     this.getView().byId("invoice_taxamount").setText(0);
                     this.getView().byId("invoice_cgst").setText(0);
                     this.getView().byId("invoice_sgst").setText(0);
@@ -2207,15 +2363,15 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 this.getView().byId("invoice_bank").setValue(0);
                 this.getView().byId("invoice_due").setValue(0);
             },
-            onPressRemove: function (oEvent) {
-                var index = oEvent.getSource().getBindingContext("InvoiceModel").getPath().split("/results/")[1];
-                index = parseInt(index);
-                var products = this.getView().getModel("InvoiceModel").getProperty("/results");
-                products.splice(index, 1);
-                this.getView().getModel("InvoiceModel").refresh(true);
-                this.calValueInvoice();
+            // onPressRemove: function (oEvent) {
+            //     var index = oEvent.getSource().getBindingContext("InvoiceModel").getPath().split("/results/")[1];
+            //     index = parseInt(index);
+            //     var products = this.getView().getModel("InvoiceModel").getProperty("/results");
+            //     products.splice(index, 1);
+            //     this.getView().getModel("InvoiceModel").refresh(true);
+            //     this.calValueInvoice();
 
-            },
+            // },
             changeAmountInvoice: function () {
                 var amount = this.getView().byId("invoice_amount").getValue();
                 amount = parseFloat(amount);
@@ -2369,7 +2525,7 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                                             <head>
                                                 <meta charset="utf-8">
                                                 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                                                <title>Manikanchan Jewellery House</title>
+                                                <title>Jewellery House</title>
                                             
                                                 <!-- Bootstrap CSS -->
                                                 <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -2750,6 +2906,8 @@ html2pdf(staticContent,{ filename: "Purchase Memo:"+${data.id} });
                 aUpper.push("Rupees Only");
                 return aUpper.join(" ");
             },
+            // register the handler 
+
         });
     }
 );

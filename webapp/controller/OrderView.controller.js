@@ -66,6 +66,14 @@ sap.ui.define(
                                         if (aDataId) {
                                             var jModel = new sap.ui.model.json.JSONModel(aDataId);
                                             that.getView().setModel(jModel, "orderModel");
+                                            if (aDataId.status == 1) {
+                                                var jModel = new sap.ui.model.json.JSONModel({ editable: true });
+
+                                            }
+                                            else {
+                                                var jModel = new sap.ui.model.json.JSONModel({ editable: false });
+                                            }
+                                            that.getView().setModel(jModel, "defaultModel");
                                         }
                                         else {
                                             var jModel = new sap.ui.model.json.JSONModel({});
@@ -86,6 +94,47 @@ sap.ui.define(
                             url: host,
                             type: "POST",
                             data: {
+                                method: "getIdentificationType",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    aDataId.push({ id: '0', item: 'N/A' })
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "idModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getStateCode",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "stateModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
                                 method: "getOrnamentType",
                             },
                             success: function (dataClient) {
@@ -93,6 +142,48 @@ sap.ui.define(
                                     var aDataId = JSON.parse(dataClient);
                                     var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
                                     that.getView().setModel(jModelID, "omtypeModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getPurity",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "purityModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+
+
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getSalesman",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "salesModel")
                                 }
                                 catch (e) {
                                     alert("Something went wrong", e)
@@ -134,10 +225,33 @@ sap.ui.define(
                                 console.log(aDataId);
                                 sap.ui.core.BusyIndicator.hide();
                                 if (aDataId.id) {
-                                    that.getView().getModel("buyer").setData(aDataId)
+                                    var custData = that.getView().getModel("orderModel").getData()
+                                    custData.address = aDataId.address;
+                                    custData.contact_number = aDataId.contact_number;
+                                    custData.gst_number = aDataId.gst_number;
+                                    custData.id = aDataId.id;
+                                    custData.id_type = aDataId.id_type;
+                                    custData.id_value = aDataId.id_value;
+                                    custData.name = aDataId.name;
+                                    custData.pincode = aDataId.pincode;
+                                    custData.state = aDataId.state;
+                                    custData.state_code = aDataId.state_code;
+                                    that.getView().getModel("orderModel").setData(custData);
                                 }
                                 else {
-                                    that.getView().getModel("buyer").setData({ contact_number: cn })
+                                    var custData = that.getView().getModel("orderModel").getData()
+                                    custData.address = "";
+                                    custData.contact_number = cn;
+                                    custData.gst_number = "";
+                                    custData.id = "";
+                                    custData.id_type = "N/A";
+                                    custData.id_value = "";
+                                    custData.name = "";
+                                    custData.pincode = "";
+                                    custData.state = "";
+                                    custData.state_code = "";
+                                    that.getView().getModel("orderModel").setData(custData);
+
                                 }
                             }
                             catch (e) {
@@ -152,107 +266,34 @@ sap.ui.define(
                     });
                 }
             },
-
+            onTabPress: function (oEvent) {
+                oEvent.getSource().onsapfocusleave = function (e) {
+                    e.srcControl.fireSubmit();
+                }
+            },
             onSave: function () {
                 sap.ui.core.BusyIndicator.show();
                 var that = this;
                 var host = this.getHost();
-                var buyerDetails = this.getView().getModel("buyer").getData();
-                if (!buyerDetails.id) {
-                    this.saveBuyer();
-                }
-                var om_type = this.getView().byId("om_type").getSelectedKey();
-                var purity = this.getView().byId("purity").getSelectedItem()?.getText();
-                var rate = this.getView().byId("rate").getValue();
-                var order_id = this.getView().byId("order_id").getValue();
-                var order_date = this.getView().byId("order_date").getDateValue().toISOString().split('T')[0];
-                var salesman = this.getView().byId("salesman").getSelectedItem()?.getText();
-                var cash = this.getView().byId("cash").getValue();
-                var cheque = this.getView().byId("cheque").getValue();
-                var upi = this.getView().byId("upi").getValue();
-                var card = this.getView().byId("card").getValue();
-                var bank = this.getView().byId("bank").getValue();
-                var amount = this.getView().byId("amount").getValue();
-                var total_amount = this.getView().byId("totamount").getText();
-                var addt = this.getView().byId("addt").getValue();
-                var chequeno = this.getView().byId("chequeno").getValue();
-                var upidetails = this.getView().byId("upidetails").getValue();
-                var apprcode = this.getView().byId("apprcode").getValue();
-                var oldgold = this.getView().byId("oldgold").getValue();
-                var purchase_id = this.getView().getModel().getProperty("/purchase_id");
-                if (purchase_id == 0) {
-                    oldgold = 0;
-                    purchase_id = null;
-                }
-                var bankdetails = this.getView().byId("bankdetails").getValue();
+                var data = that.getView().getModel("orderModel").getData();
                 $.ajax({
                     url: host,
                     type: "POST",
                     data: {
-                        method: "insertOrder",
-                        data: JSON.stringify({
-                            order_id: order_id,
-                            contact_number: buyerDetails.contact_number,
-                            customer_name: buyerDetails.name,
-                            id_type: buyerDetails.id_type,
-                            card_number: buyerDetails.id_value,
-                            address: buyerDetails.address,
-                            state: buyerDetails.state,
-                            state_code: buyerDetails.state_code,
-                            order_date: order_date,
-                            gst_number: buyerDetails.gst_number,
-                            city_pin: buyerDetails.pincode,
-                            notes: addt,
-                            total_amount: total_amount,
-                            adv_amount: amount,
-                            type: om_type,
-                            purity: purity,
-                            rate: rate,
-                            created_by: salesman,
-                            cash: cash,
-                            cheque: cheque,
-                            upi: upi,
-                            card: card,
-                            bank: bank,
-                            chequeno: chequeno,
-                            upidetails: upidetails,
-                            apprcode: apprcode,
-                            bankdetails: bankdetails,
-                            old_gold_amount: oldgold,
-                            purchase_id: purchase_id,
-                        }),
+                        method: "updateOrders",
+                        data: JSON.stringify(data),
                     },
                     success: function (dataClient) {
                         sap.ui.core.BusyIndicator.hide();
                         console.log(dataClient);
-                        $.ajax({
-                            url: host,
-                            type: "POST",
-                            data: {
-                                method: "insertVoucher",
-                                data: JSON.stringify({
-                                    order_id: order_id,
-                                    amount: amount,
-                                    voucher_date: order_date,
-                                }),
-                            },
-                            success: function (dataClient) {
-                                sap.ui.core.BusyIndicator.hide();
-                                console.log(dataClient);
-                                MessageBox.success("Succesfully Order created", {
-                                    actions: [MessageBox.Action.OK],
-                                    onClose: function (sAction) {
-                                        that.oRouter.navTo('Main')
-                                    }
-                                });
-                            },
-                            error: function (request, error) {
-                                console.log('Error');
-                                sap.ui.core.BusyIndicator.hide();
-                            },
+                        MessageBox.success("Succesfully Order Updated", {
+                            actions: [MessageBox.Action.OK],
+                            onClose: function (sAction) {
+                                that.oRouter.navTo('OrderList', {
+                                    order_id: "null"
+                                })
+                            }
                         });
-                        // MessageBox.success("Succesfully Order created");
-
 
                     },
                     error: function (request, error) {

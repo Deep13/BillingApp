@@ -1,6 +1,6 @@
 sap.ui.define(
-    ["../controller/BaseController", "sap/ui/model/json/JSONModel", "sap/m/Dialog", "sap/m/Button", "sap/m/Input", "sap/m/Label", "sap/m/List", "sap/m/StandardListItem", "sap/m/library", "sap/m/MessageBox"],
-    function (Controller, JSONModel, Dialog, Button, Input, Label, List, StandardListItem, mobileLibrary, MessageBox) {
+    ["../controller/BaseController", "sap/ui/model/json/JSONModel", "sap/m/Dialog", "sap/m/Button", "sap/m/Input", "sap/m/Label", "sap/m/List", "sap/m/StandardListItem", "sap/m/library", "sap/m/MessageBox", "sap/m/HBox"],
+    function (Controller, JSONModel, Dialog, Button, Input, Label, List, StandardListItem, mobileLibrary, MessageBox, HBox) {
         "use strict";
         var ButtonType = mobileLibrary.ButtonType;
         var DialogType = mobileLibrary.DialogType;
@@ -63,26 +63,163 @@ sap.ui.define(
             onAdd: function () {
                 this.oRouter.navTo("Buyer");
             },
-            onPressDeposit: function (oEvent) {
-                var orderId = oEvent.getSource().getBindingContext().getObject().invoice_id;
+            onEditInvoice: function (oEvent) {
+                var invoice = oEvent.getSource().getBindingContext().getObject();
+                var date1 = new Date(invoice.invoice_date); // First date
+                var date2 = new Date(); // Second date
+
+                // Calculate the difference in milliseconds
+                var differenceMs = date2 - date1;
+
+                // Convert milliseconds to days
+                var differenceDays = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
+
+                // if (differenceDays > 10) {
+                //     MessageBox.error("Sorry the invoice has crossed the editable period")
+                // }
+                // else {
+                this.oRouter.navTo("BuyerEdit", {
+                    invoice_id: invoice.invoice_id
+                })
+                // }
+
+            },
+
+            onPressDeposit: async function (oEvent) {
+                var invoice_detail = oEvent.getSource().getBindingContext().getObject();
+                var invoice_id = oEvent.getSource().getBindingContext().getObject().invoice_id;
                 var due = oEvent.getSource().getBindingContext().getObject().due;
                 var order_date = new Date().toISOString().split('T')[0];
+
                 var that = this;
                 var host = this.getHost();
+                this.deposit = { cash: 0, card: 0, bank: 0, upi: 0, cheque: 0, carddetails: "", chequedetails: "", upidetails: "", bankdetails: "" };
                 if (!this.oSubmitDialog) {
                     this.oSubmitDialog = new Dialog({
                         type: DialogType.Message,
-                        title: "Confirm",
+                        title: "Due remaining (" + due + ")",
+                        contentWidth: "500px",
                         content: [
                             new Label({
-                                text: "Due remaining (" + due + ")",
+                                text: "Enter Cash amount",
                                 labelFor: "submissionNote"
                             }),
                             new Input("submissionNote", {
                                 width: "100%",
-                                placeholder: "Deposit amount (required)",
-                                submit: function (oEvent) {
-                                    var sText = this.deposit;
+                                placeholder: "Add amount (required)",
+                                liveChange: function (oEvent) {
+                                    var sText = oEvent.getParameter("value");
+                                    this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                    this.deposit.cash = sText;
+                                }.bind(this)
+                            }),
+                            new Label({
+                                text: "Enter Card amount",
+                                labelFor: "submissionNotecard"
+                            }),
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotecard", {
+                                    placeholder: "Add amount (required)",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.card = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotecardDeatils", {
+                                    width: "250px",
+                                    placeholder: "Approval Code",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.carddetails = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                            new Label({
+                                text: "Enter Bank amount",
+                                labelFor: "submissionNotebank"
+                            }),
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotebank", {
+                                    width: "100%",
+                                    placeholder: "Add amount (required)",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.bank = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotebankDeatils", {
+                                    width: "250px",
+                                    placeholder: "Bank Details",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.bankdetails = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+
+                            new Label({
+                                text: "Enter Cheque amount",
+                                labelFor: "submissionNotecheque"
+                            }),
+
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNotecheque", {
+                                    width: "100%",
+                                    placeholder: "Add amount (required)",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.cheque = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNotechequeDeatils", {
+                                    width: "250px",
+                                    placeholder: "Cheque Number",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.chequedetails = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                            new Label({
+                                text: "Enter Upi amount",
+                                labelFor: "submissionNoteupi"
+                            }),
+
+                            new HBox({
+                                justifyContent: "SpaceBetween",
+                                items: [new Input("submissionNoteupi", {
+                                    width: "100%",
+                                    placeholder: "Add amount (required)",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.upi = sText;
+                                    }.bind(this)
+                                }), new Input("submissionNoteupiDeatils", {
+                                    width: "250px",
+                                    placeholder: "UPI Details",
+                                    liveChange: function (oEvent) {
+                                        var sText = oEvent.getParameter("value");
+                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
+                                        this.deposit.upidetails = sText;
+                                    }.bind(this)
+                                })]
+                            }),
+                        ],
+                        beginButton: new Button({
+                            type: ButtonType.Emphasized,
+                            text: "Submit",
+                            enabled: false,
+                            press: function (oEvent) {
+                                var sText = this.deposit;
+                                var total = parseFloat(sText.cash) + parseFloat(sText.card) + parseFloat(sText.bank) + parseFloat(sText.upi) + parseFloat(sText.cheque);
+                                if (parseFloat(total) <= parseFloat(due)) {
                                     this.oSubmitDialog.destroy();
                                     this.oSubmitDialog = undefined;
                                     if (sText) {
@@ -93,14 +230,29 @@ sap.ui.define(
                                             data: {
                                                 method: "insertVoucher",
                                                 data: JSON.stringify({
-                                                    order_id: orderId,
-                                                    amount: sText,
+                                                    rate: "",
+                                                    order_id: "",
+                                                    amount: total,
+                                                    cash: sText.cash,
+                                                    card: sText.card,
+                                                    apprcode: sText.carddetails,
+                                                    chequeno: sText.chequedetails,
+                                                    cheque: sText.cheque,
+                                                    bank_details: sText.bankdetails,
+                                                    bank: sText.bank,
+                                                    upi: sText.upi,
+                                                    upidetails: sText.upidetails,
+                                                    oldgold: "",
                                                     voucher_date: order_date,
+                                                    purchase_id: "",
+                                                    invoice_id: invoice_id
                                                 }),
                                             },
                                             success: function (dataClient) {
-                                                // if (sText != due) {
-                                                var balance = parseFloat(due) - parseFloat(sText);
+                                                sap.ui.core.BusyIndicator.hide();
+                                                console.log(dataClient);
+                                                var id = JSON.parse(dataClient)[1];
+                                                var balance = parseFloat(due) - parseFloat(total);
                                                 $.ajax({
                                                     url: host,
                                                     type: "POST",
@@ -108,19 +260,13 @@ sap.ui.define(
                                                         method: "updateDue",
                                                         data: JSON.stringify({
                                                             balance: balance,
-                                                            id: orderId,
+                                                            id: invoice_id,
                                                         }),
                                                     },
                                                     success: function (dataClient) {
                                                         sap.ui.core.BusyIndicator.hide();
                                                         console.log(dataClient);
-                                                        that.refreshData();
-                                                        if (sText == due) {
-                                                            MessageBox.success("Succesfully cleared");
-                                                        }
-                                                        else {
-                                                            MessageBox.success("Succesfully deposited");
-                                                        }
+
 
                                                     },
                                                     error: function (request, error) {
@@ -128,100 +274,55 @@ sap.ui.define(
                                                         sap.ui.core.BusyIndicator.hide();
                                                     },
                                                 });
-                                                // }
-                                                // else {
-                                                //     sap.ui.core.BusyIndicator.hide();
-                                                //     console.log(dataClient);
-                                                //     MessageBox.success("Succesfully cleared");
-                                                // }
+                                                var textMsg = ""
+                                                if (total == due) {
+                                                    textMsg = "Succesfully cleared";
+                                                }
+                                                else {
+                                                    textMsg = "Succesfully deposited";
+                                                }
+                                                MessageBox.success(textMsg, {
+                                                    actions: ["Print", "Close"],
+                                                    emphasizedAction: "Print",
+                                                    onClose: function (sAction) {
+                                                        if (sAction == "Print") {
+                                                            that.generateVoucherBill({
+                                                                voucher_id: 54,
+                                                                amount: total,
+                                                                invoice_detail: invoice_detail,
+                                                                voucher_date: order_date,
+                                                                cash: sText.cash,
+                                                                card: sText.card,
+                                                                bank: sText.bank,
+                                                                upi: sText.upi,
+                                                                cheque: sText.cheque,
+                                                                chequeno: sText.chequedetails,
+                                                                apprcode: sText.carddetails,
+                                                                bank_details: sText.bankdetails,
+                                                                upidetails: sText.upidetails
+                                                            });
+                                                        }
+                                                        else {
+                                                            that.refreshData();
+                                                        }
+                                                    }
+                                                });
+
+
                                             },
                                             error: function (request, error) {
                                                 console.log('Error');
                                                 sap.ui.core.BusyIndicator.hide();
+                                                MessageBox.error("Error occured")
                                             },
                                         });
                                     }
-                                }.bind(this),
-                                liveChange: function (oEvent) {
-                                    var sText = oEvent.getParameter("value");
-
-                                    this.deposit = sText;
-                                    if (parseFloat(sText) <= parseFloat(due)) {
-                                        this.oSubmitDialog.getBeginButton().setEnabled(sText.length > 0);
-                                        oEvent.getSource().setValueState("None");
-                                        oEvent.getSource().setValueStateText("");
-                                    }
-                                    else {
-                                        this.oSubmitDialog.getBeginButton().setEnabled(false);
-                                        oEvent.getSource().setValueState("Error");
-                                        oEvent.getSource().setValueStateText("Amount is greater than Due");
-                                    }
-                                }.bind(this)
-                            })
-                        ],
-                        beginButton: new Button({
-                            type: ButtonType.Emphasized,
-                            text: "Submit",
-                            enabled: false,
-                            press: function (oEvent) {
-                                var sText = this.deposit;
-                                this.oSubmitDialog.destroy();
-                                this.oSubmitDialog = undefined;
-                                if (sText) {
-                                    sap.ui.core.BusyIndicator.show();
-                                    $.ajax({
-                                        url: host,
-                                        type: "POST",
-                                        data: {
-                                            method: "insertVoucher",
-                                            data: JSON.stringify({
-                                                order_id: orderId,
-                                                amount: sText,
-                                                voucher_date: order_date,
-                                            }),
-                                        },
-                                        success: function (dataClient) {
-                                            // if (sText != due) {
-                                            var balance = parseFloat(due) - parseFloat(sText);
-                                            $.ajax({
-                                                url: host,
-                                                type: "POST",
-                                                data: {
-                                                    method: "updateDue",
-                                                    data: JSON.stringify({
-                                                        balance: balance,
-                                                        id: orderId,
-                                                    }),
-                                                },
-                                                success: function (dataClient) {
-                                                    sap.ui.core.BusyIndicator.hide();
-                                                    console.log(dataClient);
-                                                    that.refreshData();
-                                                    if (sText == due) {
-                                                        MessageBox.success("Succesfully cleared");
-                                                    }
-                                                    else {
-                                                        MessageBox.success("Succesfully deposited");
-                                                    }
-                                                },
-                                                error: function (request, error) {
-                                                    console.log('Error');
-                                                    sap.ui.core.BusyIndicator.hide();
-                                                },
-                                            });
-                                            // }
-                                            // else {
-                                            //     sap.ui.core.BusyIndicator.hide();
-                                            //     console.log(dataClient);
-                                            //     MessageBox.success("Succesfully cleared");
-                                            // }
-                                        },
-                                        error: function (request, error) {
-                                            console.log('Error');
-                                            sap.ui.core.BusyIndicator.hide();
-                                        },
-                                    });
                                 }
+                                else {
+                                    MessageBox.error("Amount should be less than the due amount")
+                                }
+
+
                             }.bind(this)
                         }),
                         endButton: new Button({
@@ -233,8 +334,209 @@ sap.ui.define(
                         })
                     });
                 }
-
+                this.oSubmitDialog.addStyleClass("marginTopLabel")
                 this.oSubmitDialog.open();
+
+            },
+            generateVoucherBill: function (data) {
+                var that = this;
+                var host = this.getHost();
+                sap.ui.core.BusyIndicator.show();
+                console.log(data);
+
+                sap.ui.core.BusyIndicator.hide();
+                // Open a new popup window
+                var printContent = this.getHTMLContentVocuher(data);
+
+                const popupWindow = window.open('', "_blank", 'width=800,height=900');
+                // Render the PopupContent component inside the popup window
+                popupWindow.document.write(printContent);
+                popupWindow.document.close();
+
+                // Trigger the print action in the new window
+                popupWindow.print();
+
+            },
+            getHTMLContentVocuher: function (data) {
+                var inWords = this.convertNumberToWordsIndianSystem(parseInt(data.amount))
+                return `<!DOCTYPE html>
+        <html lang="en">
+        
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+            <title>Jewellery House</title>
+        
+            <!-- Bootstrap CSS -->
+            <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+        
+            <!-- Fearther CSS -->
+            <link rel="stylesheet" href="./assets/css/feather.css">
+        
+            <!-- Fontawesome CSS -->
+            <link rel="stylesheet" href="./assets/plugins/fontawesome/css/fontawesome.min.css">
+            <link rel="stylesheet" href="./assets/plugins/fontawesome/css/all.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+        
+            <!-- Main CSS -->
+            <link rel="stylesheet" href="./assets/css/style.css">
+        </head>
+        
+        <body id="main-body">
+            <div class="main-wrapper">
+                <div class="container">
+                    <div class="invoice-wrapper download_section" id="download_section">
+                        <div class="inv-content">
+                            <div class="invoice-header">
+                                <div class="inv-header-left">
+                                <div style="
+                                font-size: 24px;
+                                font-weight: 700;
+                                color: #2c3038;
+                            ">DUE PAYMENT - VOUCHER</div>
+                                </div>
+                                <div class="inv-header-right">
+                                </div>
+                            </div>
+                            <div class="invoice-address">
+                                <div class="invoice-to">
+                                    <span>Invoice To:</span>
+                                    <div class="inv-to-address">
+                                       ${data.invoice_detail.customer_name}<br>
+                                       ${data.invoice_detail.address}<br>
+                                       ${data.invoice_detail.gst_number}<br>
+                                       ${data.invoice_detail.contact_number}
+                                    </div>
+                                </div>
+                                <div class="invoice-to">
+        
+                                </div>
+                                <div class="company-details">
+                                <span></span>
+                                <div>
+                                    <br />
+                                    <table>
+                                        <tr>
+                                            <td>Invoice No.</td>
+                                            <td style="text-align:left">: ${data.invoice_detail.invoice_id}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Voucher No.</td>
+                                            <td style="text-align:left">: ${data.voucher_id}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Voucher Date</td>
+                                            <td style="text-align:left">: ${data.voucher_date}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SM CODE</td>
+                                            <td style="text-align:left">: ${data.invoice_detail.created_by}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+    
+                            </div>
+                            </div>
+                            <div class="invoice-table">
+                                <div class="table-responsive">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th class="table_width_2">Item</th>
+                                                <th class="table_width_1 text-center">AMOUNT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="">DUE PAYMENT</td>
+                                            <td class="text-center">${data.amount}</td>
+                                           
+                                        </tr>
+                                         </tbody>
+               </table>
+           </div>
+       </div>
+       <div class="invoice-table-footer" style="
+       display: flex;
+       align-items: flex-start;
+   ">
+           <div class="table-footer-left">
+           <span>MODE OF PAYMENT</span>
+           <br/>
+           <table>
+           <tbody>
+               <tr>
+                   <td>CASH</td>
+                   <td>: ${data.cash}</td>
+               </tr>
+               <tr>
+                           <td>CHEQUE</td>
+                           <td>: ${data.cheque}${data.chequeno ? ` (${data.chequeno})` : ''}</td>
+                       </tr>
+                       <tr>
+                           <td>CARD</td>
+                           <td>: ${data.card}${data.apprcode ? ` Approval Code: ${data.apprcode}` : ''}</td>
+                       </tr>
+                       <tr>
+                           <td>UPI</td>
+                           <td>: ${data.upi}${data.upidetails ? ` (${data.upidetails})` : ''}</td>
+                       </tr>
+                       <tr>
+                           <td>BANK TRF</td>
+                           <td>: ${data.bank}${data.bank_details ? ` (${data.bank_details})` : ''}</td>
+                       </tr>
+           </tbody>
+       </table>
+       <br/>
+       <div>
+       <span style="padding:10px 0px;font-weight:bold;color:black">${inWords}</span>
+       </div>
+           </div>
+           <div class="table-footer-right">
+               <table class="totalamt-table">
+                   <tbody>
+                       <tr>
+                           <td>Total:</td>
+                           <td>${data.amount}</td>
+                       </tr>
+                   </tbody>
+               </table>
+           </div>
+       </div>
+    </div>
+</div>
+<div class="file-link">
+   <button class="download_btn download-link" onclick="downloadPDF()">
+       <i class="feather-download-cloud me-1"></i> <span>Download</span>
+   </button>
+   <a href="#" id="printLink" class="print-link">
+       <i class="feather-printer"></i> <span class="">Print</span>
+   </a>
+</div>
+</div>
+</div>
+</body>
+<script>
+var printLink = document.getElementById('printLink');
+
+// Add a click event listener to the link
+printLink.addEventListener('click', function(event) {
+// Prevent the default link behavior
+event.preventDefault();
+
+// Trigger the print action
+window.print();
+});
+
+function downloadPDF() {
+// Get the element containing the static content
+var staticContent = document.getElementById('download_section');
+
+// Use html2pdf to generate and download the PDF
+html2pdf(staticContent,{ filename: "Advance-voucher:"+${data.order_id} });
+}
+</script>
+</html>`;
             },
             handleLinkPress: function (oEvent) {
                 var id = oEvent.getSource().getBindingContext().getObject().invoice_id;
@@ -370,7 +672,7 @@ sap.ui.define(
                                             <head>
                                                 <meta charset="utf-8">
                                                 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                                                <title>Manikanchan Jewellery House</title>
+                                                <title>Jewellery House</title>
                                             
                                                 <!-- Bootstrap CSS -->
                                                 <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -394,7 +696,7 @@ sap.ui.define(
                                                                 <div class="invoice-header">
                                                                     <div class="inv-header-left">
                                                                     <div style="
-                                                                    font-size: 24px;
+                                                                    font-size: 15px;
                                                                     font-weight: 700;
                                                                     color: #2c3038;
                                                                 ">TAX INVOICE</div>
@@ -414,10 +716,24 @@ sap.ui.define(
                                                                     <div class="invoice-to">
                                                                         <span>Invoice To:</span>
                                                                         <div class="inv-to-address">
-                                                                           ${data.customer_name}<br>
-                                                                           ${data.address}<br>
-                                                                           ${data.gst_number}<br>
-                                                                           ${data.contact_number}
+                                                                        <table>
+                                                                        <tr>
+                                                                            <td>Name</td>
+                                                                            <td style="text-align:left">: ${data.customer_name}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>Address</td>
+                                                                            <td style="text-align:left">: ${data.address}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>GST Number</td>
+                                                                            <td style="text-align:left">: ${data.gst_number}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>Contact Number</td>
+                                                                            <td style="text-align:left">: ${data.contact_number}</td>
+                                                                        </tr>
+                                                                    </table>
                                                                         </div>`;
                 if (data.order_id) {
                     printContent += `<table style="border-top: 1px solid #96979b54;
@@ -426,14 +742,14 @@ sap.ui.define(
                                                                                 <tr>
                                                                                     <td style="color: #2c3038;
                                                                                     font-weight: 700;
-                                                                                    font-size: 16px;
+                                                                                    font-size: 12px;
                                                                                     margin-left: 8px;">ORDER NO</td>
                                                                                     <td style="text-align:left">: ${data.order_id}</td>
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td style="color: #2c3038;
                                                                                     font-weight: 700;
-                                                                                    font-size: 16px;
+                                                                                    font-size: 12px;
                                                                                     margin-left: 8px;">ORDER DATE</td>
                                                                                     <td style="text-align:left">: ${data.order_date}</td>
                                                                                 </tr>
@@ -445,7 +761,7 @@ sap.ui.define(
                                                                     </div>
                                                                     <div class="company-details">
                                                                         <span></span>
-                                                                        <div>
+                                                                        <div class="inv-to-address">
                                                                             <br />
                                                                             <table>
                                                                                 <tr>
@@ -471,9 +787,9 @@ sap.ui.define(
                                                                 </div>
                                                                 <div class="invoice-table">
                                                                     <div class="table-responsive">
-                                                                        <table>
+                                                                        <table style="border:1px solid black">
                                                                             <thead>
-                                                                                <tr>
+                                                                                <tr style="border-bottom:1px solid black">
                                                                                     <th class="table_width_1">SL. NO</th>
                                                                                     <th class="table_width_2">Item</th>
                                                                                     <th class="table_width_1">HSN</th>
@@ -482,7 +798,7 @@ sap.ui.define(
                                                                                     <th class="table_width_1 text-center">NET W.T.(Gms)</th>
                                                                                     <th class="table_width_1 text-center">VALUE</th>
                                                                                     <th class="table_width_1 text-center">MAKING</th>
-                                                                                    <th class="table_width_1 text-center">STONE WT.</th>
+                                                                                    <th class="table_width_1 text-center">STONE WT.(Gms)</th>
                                                                                     <th class="table_width_1 text-center">STONE VALUE</th>
                                                                                     <th class="table_width_1 text-center">HM CHARGE</th>
                                                                                     <th class="table_width_1 text-center">AMOUNT</th>
@@ -498,6 +814,7 @@ sap.ui.define(
                     stone: 0,
                     stval: 0,
                     hm: 0,
+                    amount: 0
                 };
                 data.productDetails.map((value, index) => {
                     total.pcs += parseFloat(value.qty);
@@ -508,6 +825,7 @@ sap.ui.define(
                     total.stone += parseFloat(value.stone_wt);
                     total.stval += parseFloat(value.st_value);
                     total.hm += parseFloat(value.hm_charge);
+                    total.amount += parseFloat(value.amount);
                     printContent += `<tr>
                                                     <td>${index + 1}</td>
                                                     <td class="">${value.orm_desc} (${value.huid})</td>
@@ -523,8 +841,23 @@ sap.ui.define(
                                                     <td class="text-center">${value.amount}</td>
                                                 </tr>`;
                 });
-
-                printContent += `<tr>
+                for (var i = 0; i < (10 - data.productDetails.length); i++) {
+                    printContent += `<tr style='border-bottom:0px'>
+                <th class="table_width_1"></th>
+                <th class="table_width_2"></th>
+                <th class="table_width_1"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center"></th>
+            </tr>`
+                }
+                printContent += `<tr style="border-top:1px solid black">
                 <th class="table_width_1">Total</th>
                 <th class="table_width_2"></th>
                 <th class="table_width_1"></th>
@@ -536,7 +869,7 @@ sap.ui.define(
                 <th class="table_width_1 text-center">${total.stone}</th>
                 <th class="table_width_1 text-center">${total.stval}</th>
                 <th class="table_width_1 text-center">${total.hm}</th>
-                <th class="table_width_1 text-center"></th>
+                <th class="table_width_1 text-center">${total.amount}</th>
             </tr> </tbody>
                                                    </table>
                                                </div>
@@ -679,7 +1012,7 @@ html2pdf(staticContent,{ filename: "Advance-voucher:"+${data.invoice_id} });
                        
                        </html>`;
 
-                const popupWindow = window.open('', '_blank', 'width=800,height=900');
+                const popupWindow = window.open('', '_blank', 'width=1200,height=900');
                 // Render the PopupContent component inside the popup window
                 popupWindow.document.write(printContent);
 

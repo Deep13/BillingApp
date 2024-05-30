@@ -274,7 +274,44 @@ sap.ui.define(
                     this.getView().byId("cash").setValue(bal)
                 }
             },
-
+            onTabPress: function (oEvent) {
+                oEvent.getSource().onsapfocusleave = function (e) {
+                    e.srcControl.fireSubmit();
+                }
+            },
+            onSaveCustomer: function () {
+                var that = this;
+                var host = this.getHost();
+                var buyerDetails = this.getView().getModel("buyer").getData();
+                var state = null;
+                if (buyerDetails.state_code) {
+                    state = this.getView().getModel("stateModel").getData().results.filter(val => val.id == buyerDetails.state_code)[0].item
+                }
+                $.ajax({
+                    url: host,
+                    type: "POST",
+                    data: {
+                        method: "insertCustomer",
+                        data: JSON.stringify({
+                            contact_number: buyerDetails.contact_number,
+                            address: buyerDetails.address,
+                            name: buyerDetails.name,
+                            id_type: buyerDetails.id_type,
+                            id_value: buyerDetails.id_value,
+                            gst_number: buyerDetails.gst_number,
+                            state: state,
+                            pincode: buyerDetails.pincode,
+                            state_code: buyerDetails.state_code
+                        }),
+                    },
+                    success: function (dataClient) {
+                        console.log(dataClient);
+                    },
+                    error: function (request, error) {
+                        console.log('Error');
+                    },
+                });
+            },
             onContactNumber: function () {
                 var that = this;
                 var host = this.getHost();
@@ -295,10 +332,12 @@ sap.ui.define(
                                 console.log(aDataId);
                                 sap.ui.core.BusyIndicator.hide();
                                 if (aDataId.id) {
-                                    that.getView().getModel("buyer").setData(aDataId)
+                                    that.getView().getModel("buyer").setData(aDataId);
+                                    that.isnewCustomer = false;
                                 }
                                 else {
-                                    that.getView().getModel("buyer").setData({ contact_number: cn, rate: aDataId.rate })
+                                    that.getView().getModel("buyer").setData({ contact_number: cn, rate: aDataId.rate });
+                                    that.isnewCustomer = true;
                                 }
                             }
                             catch (e) {
@@ -346,6 +385,9 @@ sap.ui.define(
                     purchase_id = null;
                 }
                 var bankdetails = this.getView().byId("bankdetails").getValue();
+                if (this.isnewCustomer) {
+                    this.onSaveCustomer();
+                }
                 $.ajax({
                     url: host,
                     type: "POST",
@@ -406,6 +448,7 @@ sap.ui.define(
                                     chequeno: chequeno,
                                     bank_details: bankdetails,
                                     upidetails: upidetails,
+                                    purchase_id: ""
                                 }),
                             },
                             success: function (dataClient) {

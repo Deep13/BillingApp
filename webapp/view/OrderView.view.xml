@@ -37,16 +37,18 @@
                     </f:toolbar>
                     <f:content>
                         <Label text="Contact No." />
-                        <Input editable="false" id="contact" value="{orderModel>/contact_number}"
-                            submit="onContactNumber" />
+                        <Input editable="{defaultModel>/editable}" id="contact"
+                            value="{orderModel>/contact_number}"
+                            submit="onContactNumber" liveChange="onTabPress" />
                         <Label text="Name" />
-                        <Input editable="false" id="name" value="{orderModel>/name}" />
+                        <Input editable="{defaultModel>/editable}" id="name"
+                            value="{orderModel>/name}" />
                         <Label text="Address" />
-                        <Input editable="false" id="address" value="{orderModel>/address}" />
+                        <Input editable="{defaultModel>/editable}" id="address"
+                            value="{orderModel>/address}" />
                         <Label text="Id Type" />
-                        <Input editable="false" value="{orderModel>/id_type}"></Input>
-                        <!-- <Select id="id_type"
-                            enabled="false"
+                        <Select id="id_type"
+                            enabled="{defaultModel>/editable}"
                             selectedKey="{orderModel>/id_type}"
                             items="{
                             path: 'idModel>/results'
@@ -56,25 +58,26 @@
                             <layoutData>
                                 <f:ColumnElementData cellsSmall="5" cellsLarge="5" />
                             </layoutData>
-                        </Select> -->
-                        <Input editable="false" value="{orderModel>/id_value}">
+                        </Select>
+                        <Input editable="{defaultModel>/editable}" value="{orderModel>/id_value}">
 
                         </Input>
                         <Label text="State" />
-                        <Input editable="false" value="{orderModel>/state}">
-                        </Input>
-                        <!-- <Select id="State" selectedKey="{orderModel>/state_code}"
+                        <!-- <Input editable="{defaultModel>/editable}" value="{orderModel>/state}">
+                        </Input> -->
+                        <Select id="State" selectedKey="{orderModel>/state_code}"
                             items="{
                             path: 'stateModel>/results'
                         }"
+                            enabled="{defaultModel>/editable}"
                             forceSelection="false">
                             <core:Item key="{stateModel>id}" text="{stateModel>item}" />
-                        </Select> -->
+                        </Select>
 
                         <Label text="Pincode" />
-                        <Input editable="false" value="{orderModel>/pincode}" />
+                        <Input editable="{defaultModel>/editable}" value="{orderModel>/pincode}" />
                         <Label text="GST" />
-                        <Input editable="false" value="{orderModel>/gst_number}" />
+                        <Input editable="{defaultModel>/editable}" value="{orderModel>/gst_number}" />
 
                     </f:content>
                 </f:SimpleForm>
@@ -83,92 +86,59 @@
             <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween">
                 <VBox>
                     <Label text="Type of Ornament" />
-                    <Input editable="false" width="200px" value="{orderModel>/type}" />
+                    <Select id="om_type"
+                        selectedKey="{orderModel>/type}"
+                        width="200px"
+                        items="{
+        path: 'omtypeModel>/results'
+    }"
+                        forceSelection="false">
+                        <core:Item key="{omtypeModel>item}" text="{omtypeModel>item}" />
+                    </Select>
 
                 </VBox>
 
                 <VBox>
                     <Label text="Purity" />
-                    <Input editable="false" width="200px" value="{orderModel>/purity}" />
-                    <!-- <Select id="purity"
+                    <Select id="purity"
                         width="200px"
+                        selectedKey="{orderModel>/purity}"
+                        enabled="{defaultModel>/editable}"
                         items="{
                 path: 'purityModel>/results'
             }"
                         forceSelection="false">
-                        <core:Item key="{purityModel>item}" text="{purityModel>item}" /> -->
-                    <!-- </Select> -->
+                        <core:Item key="{purityModel>item}" text="{purityModel>item}" />
+                    </Select>
                 </VBox>
                 <VBox>
                     <Label text="Rate/Gm." />
-                    <Input editable="false" width="200px" id="rate" value="{orderModel>/rate}"
+                    <Input editable="{defaultModel>/editable}" width="200px" id="rate"
+                        value="{orderModel>/rate}"
                         submit="calAddt" />
                 </VBox>
                 <VBox>
                     <Label text="Salesman" />
-                    <Input editable="false" width="200px" value="{orderModel>/created_by}"
-                    />
-                    <!-- <Select id="salesman"
+                    <!-- <Input editable="{defaultModel>/editable}" width="200px"
+                        value="{orderModel>/created_by}"
+                    /> -->
+                    <Select id="salesman"
                         width="200px"
+                        selectedKey="{orderModel>/created_by}"
                         items="{
                 path: 'salesModel>/results'
             }"
-                        forceSelection="false">
-                        <core:Item key="{salesModel>id}" text="{salesModel>user_name}" />
-                    </Select> -->
+                        forceSelection="false"
+                        enabled="{defaultModel>/editable}">
+                        <core:Item key="{salesModel>user_name}" text="{salesModel>user_name}" />
+                    </Select>
                 </VBox>
             </HBox>
-
-            <HBox class="sapUiMediumMargin" justifyContent="SpaceBetween" direction="RowReverse">
-                <VBox>
-                    <HBox id="oldgoldBox" alignItems="Center" visible="false">
-                        <Title level="h1" text="Old Gold Adj.(id :{/purchase_id}): " width="150px" />
-                        <Input editable="false" value="{orderModel>/old_gold_amount}" width="100px"
-                            textAlign="Right"
-                            id="oldgold" class='fs-1' />
-                    </HBox>
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="Total Amount: " width="150px" />
-                        <Title level="h1" id="totamount" text="{orderModel>/total_amount}"
-                            width="100px" />
-                    </HBox>
-                </VBox>
-                <VBox>
-                    <Title level="h1" text="Payment mode" />
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="Cash: " width="120px" />
-                        <Input editable="false" id="cash" value="{orderModel>/cash}" />
-                    </HBox>
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="Card: " width="120px" />
-                        <Input editable="false" id="card" value="{orderModel>/card}" />
-                        <Input editable="false" id="apprcode" class="sapUiSmallMarginBegin"
-                            placeholder="Approval code" value="{orderModel>/apprcode}" />
-                    </HBox>
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="Cheque: " width="120px" />
-                        <Input editable="false" id="cheque" value="{orderModel>/cheque}" />
-                        <Input editable="false" id="chequeno" class="sapUiSmallMarginBegin"
-                            placeholder="Cheque number" value="{orderModel>/chequeno}" />
-                    </HBox>
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="UPI: " width="120px" />
-                        <Input editable="false" id="upi" value="{orderModel>/upi}" />
-                        <Input editable="false" id="upidetails" class="sapUiSmallMarginBegin"
-                            placeholder="UPI id" value="{orderModel>/upidetails}" />
-                    </HBox>
-
-                    <HBox alignItems="Center">
-                        <Title level="h1" text="Bank Transfer: " width="120px" />
-                        <Input editable="false" id="bank" value="{orderModel>/bank}" />
-                        <Input editable="false" id="bankdetails" class="sapUiSmallMarginBegin"
-                            placeholder="Details" value="{orderModel>/bankdetails}" />
-                    </HBox>
-                    <TextArea id="addt" rows="3" cols="35" placeholder="Additional Notes"
-                        value="{orderModel>/notes}" editable="false"></TextArea>
-                </VBox>
-
+            <HBox class="sapUiMediumMargin" justifyContent="End">
+                <Button text='Submit' press="onSave" />
             </HBox>
+
+
         </content>
         <footer>
             <OverflowToolbar>

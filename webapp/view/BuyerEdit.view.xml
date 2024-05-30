@@ -1,4 +1,4 @@
-<mvc:View controllerName="Billing.Billing.controller.Buyer" xmlns:mvc="sap.ui.core.mvc"
+<mvc:View controllerName="Billing.Billing.controller.BuyerEdit" xmlns:mvc="sap.ui.core.mvc"
     xmlns:l="sap.ui.layout"
     xmlns:f="sap.ui.layout.form"
     xmlns:core="sap.ui.core"
@@ -21,28 +21,20 @@
                         <Toolbar id="TB1">
                             <Title id="Title1" text="Buyer Details" />
                             <ToolbarSpacer />
-                            <Label text="Order Number" />
-                            <Input id="order_id" width="100px" value="" submit="getOrder" />
-                            <DatePicker
-                                id="invoice_date"
-                                width="200px"
-                                placeholder="Enter Date"
-                                change="handleChange"
-                                dateValue="{/currentDate}" />
                         </Toolbar>
                     </f:toolbar>
                     <f:content>
                         <Label text="Contact No." />
-                        <Input id="contact" value="{buyer>/contact_number}" liveChange="onTabPress"
+                        <Input id="contact" value="{header>/contact_number}" liveChange="onTabPress"
                             submit="onContactNumber" />
                         <Label text="Name" />
-                        <Input id="name" value="{buyer>/name}" />
+                        <Input id="name" value="{header>/customer_name}" />
                         <Label text="Address" />
-                        <Input id="address" value="{buyer>/address}" />
+                        <Input id="address" value="{header>/address}" />
                         <Label text="Id Type" />
                         <Select id="id_type"
                             change="changeID"
-                            selectedKey="{buyer>/id_type}"
+                            selectedKey="{header>/id_type}"
                             items="{
                             path: 'idModel>/results'
                         }"
@@ -52,22 +44,22 @@
                                 <f:ColumnElementData cellsSmall="5" cellsLarge="5" />
                             </layoutData>
                         </Select>
-                        <Input id="id_val" value="{buyer>/id_value}">
+                        <Input id="id_val" value="{header>/card_number}">
 
                         </Input>
                         <Label text="State" />
-                        <Select id="State" selectedKey="{buyer>/state_code}"
+                        <Select id="State" selectedKey="{header>/state}"
                             items="{
                             path: 'stateModel>/results'
                         }"
                             forceSelection="false">
-                            <core:Item key="{stateModel>id}" text="{stateModel>item}" />
+                            <core:Item key="{stateModel>item}" text="{stateModel>item}" />
                         </Select>
 
                         <Label text="Pincode" />
-                        <Input value="{buyer>/pincode}" />
+                        <Input value="{header>/city_pin}" />
                         <Label text="GST" />
-                        <Input value="{buyer>/gst_number}" />
+                        <Input value="{header>/gst_number}" />
 
                     </f:content>
                 </f:SimpleForm>
@@ -77,6 +69,7 @@
                 <VBox>
                     <Label text="Type of Ornament" />
                     <Select id="om_type"
+                        selectedKey="{header>/type}"
                         width="200px"
                         change="getHM"
                         items="{
@@ -90,6 +83,7 @@
                 <VBox>
                     <Label text="Purity" />
                     <Select id="purity"
+                        selectedKey="{header>/purity}"
                         width="200px"
                         items="{
                 path: 'purityModel>/results'
@@ -100,18 +94,19 @@
                 </VBox>
                 <VBox>
                     <Label text="Rate/Gm." />
-                    <Input width="200px" id="rate" submit="calValue" />
+                    <Input width="200px" id="rate" submit="calValue" value="{header>/rate}" />
                 </VBox>
                 <VBox>
                     <Label text="Salesman" />
 
                     <Select id="salesman"
                         width="200px"
+                        selectedKey="{header>/created_by}"
                         items="{
                 path: 'salesModel>/results'
             }"
                         forceSelection="false">
-                        <core:Item key="{salesModel>id}" text="{salesModel>user_name}" />
+                        <core:Item key="{salesModel>user_name}" text="{salesModel>user_name}" />
                     </Select>
                 </VBox>
             </HBox>
@@ -183,8 +178,8 @@
                             <Input value="{Products>making}" submit="calValue"
                                 liveChange="onTabPress" />
                             <Input value="{Products>stone_wt}" />
-                            <Input value="{Products>st_val}" />
-                            <Input value="{Products>hmcharge}" submit="calValue"
+                            <Input value="{Products>st_value}" />
+                            <Input value="{Products>hm_charge}" submit="calValue"
                                 liveChange="onTabPress" />
                             <Input value="{Products>amount}" />
                             <Input value="{Products>huid}" submit="onAdd" />
@@ -257,38 +252,43 @@
                     <Title level="H1" text="Payment mode" />
                     <HBox alignItems="Center">
                         <Title level="H1" text="Cash: " width="120px" />
-                        <Input id="cash" liveChange="calDue" />
+                        <Input id="cash" liveChange="calDue" value="{header>/cash}" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="H1" text="Card: " width="120px" />
-                        <Input id="card" liveChange="calDue" />
+                        <Input id="card" liveChange="calDue" value="{header>/card}" />
                         <Input id="apprcode" class="sapUiSmallMarginBegin"
+                            value="{header>/apprcode}"
                             placeholder="Approval code" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="H1" text="Cheque: " width="120px" />
-                        <Input id="cheque" liveChange="calDue" />
+                        <Input id="cheque" liveChange="calDue" value="{header>/cheque}" />
                         <Input id="chequeno" class="sapUiSmallMarginBegin"
+                            value="{header>/chequeno}"
                             placeholder="Cheque number" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="H1" text="UPI: " width="120px" />
-                        <Input id="upi" liveChange="calDue" />
+                        <Input id="upi" liveChange="calDue" value="{header>/upi}" />
                         <Input id="upidetails" class="sapUiSmallMarginBegin"
+                            value="{header>/upidetails}"
                             placeholder="UPI id" />
                     </HBox>
 
                     <HBox alignItems="Center">
                         <Title level="H1" text="Bank Transfer: " width="120px" />
-                        <Input id="bank" liveChange="calDue" />
+                        <Input id="bank" liveChange="calDue" value="{header>/bank}" />
                         <Input id="bankdetails" class="sapUiSmallMarginBegin"
+                            value="{header>/bankdetails}"
                             placeholder="Details" />
                     </HBox>
                     <HBox alignItems="Center">
                         <Title level="H1" text="Due: " width="120px" />
-                        <Input id="due" />
+                        <Input id="due" value="{header>/due}" />
                     </HBox>
-                    <TextArea id="addt" rows="3" cols="35" placeholder="Additional Notes"></TextArea>
+                    <TextArea id="addt" rows="3" cols="35" placeholder="Additional Notes"
+                        value="{header>/notes}"></TextArea>
                 </VBox>
 
             </HBox>

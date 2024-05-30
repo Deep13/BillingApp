@@ -62,14 +62,15 @@
                     </Column>
                 </columns>
                 <items>
-                    <ColumnListItem type="Navigation" press='onPressNav'>
+                    <ColumnListItem type="Navigation" press='onPressNav'
+                        highlight="{= ${status} === '0' ? 'Success' : 'None' }">
                         <cells>
                             <Text text="{order_id}" />
                             <Text text="{order_date}" />
                             <Text text="{contact_number}" />
                             <Text text="{name}" />
                             <Text text="{gst_number}" />
-                            <Text text="{total_amount}" />
+                            <Text text="{total_combined_amount}" />
                             <Button enabled="{= ${vouchers} > 0 ? true : false }"
                                 text="{vouchers}"
                                 press="handleLinkPress"
@@ -83,6 +84,7 @@
                                     press="onPressEdit" tooltip="Invoice" /> -->
                                 <Button class='sapUiSmallMarginBegin'
                                     icon="sap-icon://loan"
+                                    enabled="{= ${status} === '0' ? false : true }"
                                     press="onPressDeposit" tooltip="Deposit" />
                             </HBox>
                         </cells>

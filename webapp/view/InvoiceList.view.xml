@@ -58,7 +58,7 @@
                     </Column>
                 </columns>
                 <items>
-                    <ColumnListItem type="Navigation"
+                    <ColumnListItem type="Navigation" press="onEditInvoice"
                         highlight="{path: 'due',
                     formatter: '.dueStatusHighlight'}">
                         <cells>

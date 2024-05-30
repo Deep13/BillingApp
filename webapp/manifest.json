@@ -142,6 +142,11 @@
           "target": "Buyer"
         },
         {
+          "name": "Analytics",
+          "pattern": "Analytics",
+          "target": "Analytics"
+        },
+        {
           "name": "Order",
           "pattern": "Order/{purchase_id}",
           "target": "Order"
@@ -158,13 +163,18 @@
         },
         {
           "name": "Purchase",
-          "pattern": "Purchase",
+          "pattern": "Purchase/{purchase_id}",
           "target": "Purchase"
         },
         {
           "name": "PurchaseList",
           "pattern": "PurchaseList/{purchase_id}",
           "target": "PurchaseList"
+        },
+        {
+          "name": "BuyerEdit",
+          "pattern": "BuyerEdit/{invoice_id}",
+          "target": "BuyerEdit"
         },
         {
           "name": "OrderView",
@@ -208,10 +218,20 @@
           "transition": "slide",
           "viewName": "OrderView"
         },
+        "BuyerEdit": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "BuyerEdit"
+        },
         "PurchaseList": {
           "viewType": "XML",
           "transition": "slide",
           "viewName": "PurchaseList"
+        },
+        "Analytics": {
+          "viewType": "XML",
+          "transition": "slide",
+          "viewName": "Analytics"
         },
         "OrderList": {
           "viewType": "XML",

@@ -14,186 +14,225 @@ sap.ui.define(
                 var that = this;
                 this.oRouter = sap.ui.core.UIComponent.getRouterFor(this);
                 this.oRouter
-                    .getRoute("Buyer")
+                    .getRoute("BuyerEdit")
                     .attachPatternMatched(this._handleRouteMatched, this);
+            },
+            _handleRouteMatched: async function (oEvent) {
+                var invoice_id = oEvent.getParameter("arguments").invoice_id;
+                if (invoice_id) {
+                    var data = this.getUserLog();
+                    var that = this;
+                    var host = this.getHost();
+                    if (!data) {
+                        // alert('user logged in');
+                        this.oRouter.navTo("");
+                    }
+                    else {
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getIdentificationType",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    aDataId.push({ id: '0', item: 'N/A' })
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "idModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getGstEntry",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    that.gst = parseFloat(aDataId[0].value);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ cgst: (that.gst / 2).toFixed(2), sgst: (that.gst / 2).toFixed(2) });
+                                    that.getView().setModel(jModelID, "gstModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getStateCode",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "stateModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getOrnamentType",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "omtypeModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getPurity",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "purityModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
 
-                function doc_keyUp(e) {
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getHmCharge",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    that.hmData = aDataId;
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
 
-                    // this would test for whichever key is 40 (down arrow) and the ctrl key at the same time
-                    if (e.ctrlKey && e.code === 'KeyA') {
-                        // call your function to do the thing
-                        that.onAdd();
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getSalesman",
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
+                                    that.getView().setModel(jModelID, "salesModel")
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
+                        $.ajax({
+                            url: host,
+                            type: "POST",
+                            data: {
+                                method: "getInvoicewithId",
+                                data: JSON.stringify({ invoice_id: invoice_id }),
+                            },
+                            success: function (dataClient) {
+                                try {
+                                    var aDataId = JSON.parse(dataClient);
+                                    console.log(aDataId[0]);
+                                    if (aDataId[0]) {
+                                        var jModelID = new sap.ui.model.json.JSONModel(aDataId[0]);
+                                        that.getView().setModel(jModelID, "header")
+                                        $.ajax({
+                                            url: host,
+                                            type: "POST",
+                                            data: {
+                                                method: "getInvoiceDetail",
+                                                data: JSON.stringify({ invoice_id: invoice_id }),
+                                            },
+                                            success: function (dataClient) {
+                                                try {
+                                                    var aDataIdDetail = JSON.parse(dataClient);
+                                                    console.log(aDataIdDetail);
+                                                    var jModelID = new sap.ui.model.json.JSONModel({ results: aDataIdDetail });
+                                                    that.getView().setModel(jModelID, "Products");
+                                                    that.calValue();
+
+                                                }
+                                                catch (e) {
+                                                    alert("Something went wrong", e)
+                                                }
+                                            },
+                                            error: function (request, error) {
+                                                console.log('Error')
+                                            }
+                                        });
+                                    }
+                                    else {
+                                        this.oRouter.navTo("InvoiceList", {
+                                            invoice_id: "null"
+                                        });
+                                    }
+
+                                }
+                                catch (e) {
+                                    alert("Something went wrong", e)
+                                }
+                            },
+                            error: function (request, error) {
+                                console.log('Error')
+                            }
+                        });
                     }
                 }
-                // register the handler 
-                document.addEventListener('keyup', doc_keyUp, false);
-
-
-            },
-            _handleRouteMatched: async function () {
-                var data = this.getUserLog();
-                this.grandTotal = 0;
-                var that = this;
-                var host = this.getHost();
-                if (!data) {
-                    // alert('user logged in');
-                    this.oRouter.navTo("");
-                }
                 else {
-                    var rate_default = await localStorage.getItem("gold_rate");
-                    this.getView().byId("rate").setValue(rate_default);
-                    this.getView().byId("salesman").setSelectedKey(data.id)
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getIdentificationType",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                aDataId.push({ id: '0', item: 'N/A' })
-                                var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
-                                that.getView().setModel(jModelID, "idModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
+                    this.oRouter.navTo("InvoiceList", {
+                        invoice_id: "null"
                     });
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getGstEntry",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                that.gst = parseFloat(aDataId[0].value);
-                                var jModelID = new sap.ui.model.json.JSONModel({ cgst: (that.gst / 2).toFixed(2), sgst: (that.gst / 2).toFixed(2) });
-                                that.getView().setModel(jModelID, "gstModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getStateCode",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
-                                that.getView().setModel(jModelID, "stateModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getOrnamentType",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
-                                that.getView().setModel(jModelID, "omtypeModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getPurity",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
-                                that.getView().setModel(jModelID, "purityModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getHmCharge",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                that.hmData = aDataId;
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-
-                    $.ajax({
-                        url: host,
-                        type: "POST",
-                        data: {
-                            method: "getSalesman",
-                        },
-                        success: function (dataClient) {
-                            try {
-                                var aDataId = JSON.parse(dataClient);
-                                var jModelID = new sap.ui.model.json.JSONModel({ results: aDataId });
-                                that.getView().setModel(jModelID, "salesModel")
-                            }
-                            catch (e) {
-                                alert("Something went wrong", e)
-                            }
-                        },
-                        error: function (request, error) {
-                            console.log('Error')
-                        }
-                    });
-                    var jModelID = new sap.ui.model.json.JSONModel({ results: [{}] });
-                    that.getView().setModel(jModelID, "Products")
-                    var date = new Date();
-                    var jModel = new sap.ui.model.json.JSONModel({ currentDate: date });
-                    this.getView().setModel(jModel);
-                    var jModelB = new sap.ui.model.json.JSONModel({});
-                    this.getView().setModel(jModelB, "buyer")
                 }
+
 
             },
 
@@ -204,7 +243,7 @@ sap.ui.define(
                     this.selectedHM = ahm[0].item;
                     var products = this.getView().getModel("Products").getProperty("/results");
                     products.map(value => {
-                        value.hmcharge = ahm[0].item;
+                        value.hm_charge = ahm[0].item;
                     });
                     this.getView().getModel("Products").refresh(true);
                     this.calValue();
@@ -286,9 +325,9 @@ sap.ui.define(
                             var temp = JSON.parse(dataClient);
                             var products = that.getView().getModel("Products").getProperty("/results");
                             products[index] = temp[0];
-                            products[index].hmcharge = that.selectedHM;
+                            products[index].hm_charge = that.selectedHM;
                             products[index].making = 0;
-                            products[index].st_val = 0;
+                            products[index].st_value = 0;
                             that.getView().getModel("Products").refresh(true)
                             that.getHM();
                             // temp[index].hmcharge = HMCharge;
@@ -347,7 +386,7 @@ sap.ui.define(
                 var products = this.getView().getModel("Products").getProperty("/results");
                 products.map(value => {
                     value.value = parseFloat(value.net_wt) * rate;
-                    value.amount = (parseFloat(value.net_wt) * rate) + parseFloat(value.making ? value.making : 0) + parseFloat(value.hmcharge ? value.hmcharge : 0);
+                    value.amount = (parseFloat(value.net_wt) * rate) + parseFloat(value.making ? value.making : 0) + parseFloat(value.hm_charge ? value.hm_charge : 0);
                 });
                 this.getView().getModel("Products").refresh(true);
                 this.getView().byId("discount").setText(0);
@@ -407,7 +446,7 @@ sap.ui.define(
                     this.getView().byId("roundoff").setText(roundoff);
                     this.getView().byId("amount").setValue((totalAmount + roundoff).toFixed(2));
                     this.grandTotal = (totalAmount + roundoff).toFixed(2);
-                    this.getView().byId("cash").setValue((totalAmount + roundoff).toFixed(2));
+                    // this.getView().byId("cash").setValue((totalAmount + roundoff).toFixed(2));
                 }
                 else {
                     this.getView().byId("taxamount").setText(0);
@@ -419,62 +458,33 @@ sap.ui.define(
                     this.getView().byId("cash").setValue(0);
 
                 }
-                this.onresetPayment();
+                // this.onresetPayment();
             },
 
             calDue: function () {
-                var amount = this.getView().byId("amount").getValue();
-                var cash = this.getView().byId("cash").getValue();
-                var cheque = this.getView().byId("cheque").getValue();
-                var upi = this.getView().byId("upi").getValue();
-                var card = this.getView().byId("card").getValue();
-                var bank = this.getView().byId("bank").getValue();
+                // var amount = this.getView().byId("amount").getValue();
+                // var cash = this.getView().byId("cash").getValue();
+                // var cheque = this.getView().byId("cheque").getValue();
+                // var upi = this.getView().byId("upi").getValue();
+                // var card = this.getView().byId("card").getValue();
+                // var bank = this.getView().byId("bank").getValue();
 
-                var due = (parseFloat(amount) - (parseFloat(cash) + parseFloat(cheque) + parseFloat(upi) + parseFloat(card) + parseFloat(bank)));
+                // var due = (parseFloat(amount) - (parseFloat(cash) + parseFloat(cheque) + parseFloat(upi) + parseFloat(card) + parseFloat(bank)));
 
-                this.getView().byId("due").setValue(due);
+                // this.getView().byId("due").setValue(due);
             },
             changeAmount: function () {
                 var amount = this.getView().byId("amount").getValue();
                 amount = parseFloat(amount);
-                // var adv = this.getView().byId("adv").getValue();
-                // var nontax = this.getView().byId("nontax").getValue();
-                // if (!adv) {
-                //     adv = 0
-                // }
-                // if (!nontax) {
-                //     nontax = 0
-                // }
-                // else {
-                //     nontax = parseFloat(nontax)
-                // }
-                // var products = this.getView().getModel("Products").getProperty("/results");
-                // var gstM = this.getView().getModel("gstModel").getData();
-                // var totalVal = 0;
-                // products.map(value => {
-                //     totalVal += parseFloat(value.amount);
-                // });
-                // var gst = (totalVal * (parseFloat(gstM.cgst) / 100)).toFixed(2);
-                // gst = parseFloat(gst);
-                // totalVal = totalVal + gst + gst + nontax - adv;
 
                 var discount = this.grandTotal - amount;
                 this.getView().byId("discount").setText(discount);
                 this.grandTotal = amount;
                 this.calAddt();
-                this.onresetPayment();
+                // this.onresetPayment();
             },
             addnontax: function () {
 
-            },
-            onresetPayment: function () {
-                // var amount = this.getView().byId("amount").getValue();
-                // this.getView().byId("cash").setValue(amount);
-                this.getView().byId("cheque").setValue(0);
-                this.getView().byId("upi").setValue(0);
-                this.getView().byId("card").setValue(0);
-                this.getView().byId("bank").setValue(0);
-                this.getView().byId("due").setValue(0);
             },
             onAdd: function () {
                 var products = this.getView().getModel("Products").getProperty("/results");
@@ -523,12 +533,11 @@ sap.ui.define(
             onSave: function () {
                 var that = this;
                 var host = this.getHost();
-                var buyerDetails = this.getView().getModel("buyer").getData();
+                var buyerDetails = this.getView().getModel("header").getData();
                 var productDetails = this.getView().getModel("Products").getProperty("/results");
                 var om_type = this.getView().byId("om_type").getSelectedItem()?.getText();
                 var purity = this.getView().byId("purity").getSelectedItem()?.getText();
                 var rate = this.getView().byId("rate").getValue();
-                var invoice_date = this.getView().byId("invoice_date").getDateValue().toISOString().split('T')[0];
                 var salesman = this.getView().byId("salesman").getSelectedItem()?.getText();
                 var cash = this.getView().byId("cash").getValue();
                 var cheque = this.getView().byId("cheque").getValue();
@@ -549,63 +558,53 @@ sap.ui.define(
                 var taxamount = this.getView().byId("taxamount").getText();
                 var taxafamount = this.getView().byId("taxafamount").getText();
                 var adv = this.getView().byId("adv").getValue();
-                var order_id = this.getView().byId('order_id').getValue();
-                var order_date = '0000-00-00';
-                if (order_id && buyerDetails.order_date) {
-                    order_date = buyerDetails.order_date;
-                    this.exhaustOrder(order_id);
-                }
-                if (this.isnewCustomer) {
-                    this.onSaveCustomer();
+                var payload = {
+                    invoice_id: buyerDetails.invoice_id,
+                    contact_number: buyerDetails.contact_number,
+                    customer_name: buyerDetails.customer_name,
+                    id_type: buyerDetails.id_type,
+                    card_number: buyerDetails.card_number,
+                    address: buyerDetails.address,
+                    state: buyerDetails.state,
+                    gst_number: buyerDetails.gst_number,
+                    city_pin: buyerDetails.city_pin,
+                    notes: addt,
+                    discounted_price: discount,
+                    cgst: cgst,
+                    sgst: sgst,
+                    nontax: nontax,
+                    total_amount: amount,
+                    type: om_type,
+                    purity: purity,
+                    rate: rate,
+                    created_by: salesman,
+                    cash: cash,
+                    cheque: cheque,
+                    upi: upi,
+                    card: card,
+                    bank: bank,
+                    chequeno: chequeno,
+                    upidetails: upidetails,
+                    apprcode: apprcode,
+                    bankdetails: bankdetails,
+                    due: due,
+                    taxamount: taxamount,
+                    taxafamount: taxafamount,
+                    adv: adv,
+                    old_gold_amount: 0,
+                    purchase_id: "",
                 }
                 $.ajax({
                     url: host,
                     type: "POST",
                     data: {
-                        method: "insertInvoice",
-                        data: JSON.stringify({
-                            contact_number: buyerDetails.contact_number,
-                            customer_name: buyerDetails.name,
-                            id_type: buyerDetails.id_type,
-                            card_number: buyerDetails.id_value,
-                            address: buyerDetails.address,
-                            state: buyerDetails.state,
-                            invoice_date: invoice_date,
-                            gst_number: buyerDetails.gst_number,
-                            city_pin: buyerDetails.pincode,
-                            notes: addt,
-                            discounted_price: discount,
-                            cgst: cgst,
-                            sgst: sgst,
-                            nontax: nontax,
-                            total_amount: amount,
-                            type: om_type,
-                            purity: purity,
-                            rate: rate,
-                            created_by: salesman,
-                            cash: cash,
-                            cheque: cheque,
-                            upi: upi,
-                            card: card,
-                            bank: bank,
-                            chequeno: chequeno,
-                            upidetails: upidetails,
-                            apprcode: apprcode,
-                            bankdetails: bankdetails,
-                            due: due,
-                            taxamount: taxamount,
-                            taxafamount: taxafamount,
-                            adv: adv,
-                            order_id: order_id,
-                            order_date: order_date,
-                            old_gold_amount: 0,
-                            purchase_id: "",
-                        }),
+                        method: "updateInvoice",
+                        data: JSON.stringify(payload),
                     },
                     success: function (dataClient) {
                         console.log(dataClient);
-                        if (dataClient.indexOf('Insertion successful') !== -1) {
-                            var invoice_id = JSON.parse(dataClient)[1];
+                        if (dataClient.indexOf('Update successful') !== -1) {
+                            var invoice_id = buyerDetails.invoice_id;
                             var reqData = JSON.stringify({
                                 invoice_id: invoice_id,
                                 data: productDetails,
@@ -615,160 +614,66 @@ sap.ui.define(
                                 url: host,
                                 type: "POST",
                                 data: {
-                                    method: "insertInvoiceDetails",
+                                    method: "updateInvoiceDetails",
                                     data: reqData,
                                 },
                                 success: function (dataClient) {
                                     console.log(dataClient);
                                     sap.ui.core.BusyIndicator.hide();
                                     that.updateStock(productDetails);
-                                    if (buyerDetails.gst_number) {
-                                        MessageBox.confirm("Succesfully Updated", {
-                                            actions: ["Generate E-Bill", "Print", "Close"],
-                                            emphasizedAction: "Print",
-                                            onClose: function (sAction) {
-                                                if (sAction == "Generate E-Bill") {
-                                                    that.generateBill({
-                                                        invoice_id: invoice_id,
-                                                        contact_number: buyerDetails.contact_number,
-                                                        customer_name: buyerDetails.name,
-                                                        id_type: buyerDetails.id_type,
-                                                        card_number: buyerDetails.id_value,
-                                                        address: buyerDetails.address,
-                                                        state: buyerDetails.state,
-                                                        invoice_date: invoice_date,
-                                                        gst_number: buyerDetails.gst_number,
-                                                        city_pin: buyerDetails.pincode,
-                                                        notes: addt,
-                                                        discounted_price: discount,
-                                                        cgst: cgst,
-                                                        sgst: sgst,
-                                                        nontax: nontax,
-                                                        total_amount: amount,
-                                                        type: om_type,
-                                                        purity: purity,
-                                                        rate: rate,
-                                                        created_by: salesman,
-                                                        cash: cash,
-                                                        cheque: cheque,
-                                                        upi: upi,
-                                                        card: card,
-                                                        bank: bank,
-                                                        chequeno: chequeno,
-                                                        upidetails: upidetails,
-                                                        apprcode: apprcode,
-                                                        bankdetails: bankdetails,
-                                                        due: due,
-                                                        productDetails: productDetails,
-                                                        taxamount: taxamount,
-                                                        taxafamount: taxafamount,
-                                                        adv: adv,
-                                                        order_id: order_id,
-                                                        order_date: order_date,
-                                                    });
-                                                }
-                                                else if (sAction == "Print") {
-                                                    that.onPrintInvoice({
-                                                        invoice_id: invoice_id,
-                                                        contact_number: buyerDetails.contact_number,
-                                                        customer_name: buyerDetails.name,
-                                                        id_type: buyerDetails.id_type,
-                                                        card_number: buyerDetails.id_value,
-                                                        address: buyerDetails.address,
-                                                        state: buyerDetails.state,
-                                                        invoice_date: invoice_date,
-                                                        gst_number: buyerDetails.gst_number,
-                                                        city_pin: buyerDetails.pincode,
-                                                        notes: addt,
-                                                        discounted_price: discount,
-                                                        cgst: cgst,
-                                                        sgst: sgst,
-                                                        nontax: nontax,
-                                                        total_amount: amount,
-                                                        type: om_type,
-                                                        purity: purity,
-                                                        rate: rate,
-                                                        created_by: salesman,
-                                                        cash: cash,
-                                                        cheque: cheque,
-                                                        upi: upi,
-                                                        card: card,
-                                                        bank: bank,
-                                                        chequeno: chequeno,
-                                                        upidetails: upidetails,
-                                                        apprcode: apprcode,
-                                                        bankdetails: bankdetails,
-                                                        due: due,
-                                                        productDetails: productDetails,
-                                                        taxamount: taxamount,
-                                                        taxafamount: taxafamount,
-                                                        adv: adv,
-                                                        order_id: order_id,
-                                                        order_date: order_date,
-                                                    });
-                                                }
-                                                else {
-                                                    that.oRouter.navTo("InvoiceList", {
-                                                        invoice_id: "null"
-                                                    });
-                                                }
+                                    MessageBox.confirm("Succesfully Updated", {
+                                        actions: ["Print", "Close"],
+                                        emphasizedAction: "Print",
+                                        onClose: function (sAction) {
+                                            if (sAction == "Print") {
+                                                that.onPrintInvoice({
+                                                    invoice_id: invoice_id,
+                                                    contact_number: buyerDetails.contact_number,
+                                                    customer_name: buyerDetails.name,
+                                                    id_type: buyerDetails.id_type,
+                                                    card_number: buyerDetails.id_value,
+                                                    address: buyerDetails.address,
+                                                    state: buyerDetails.state,
+                                                    invoice_date: invoice_date,
+                                                    gst_number: buyerDetails.gst_number,
+                                                    city_pin: buyerDetails.pincode,
+                                                    notes: addt,
+                                                    discounted_price: discount,
+                                                    cgst: cgst,
+                                                    sgst: sgst,
+                                                    nontax: nontax,
+                                                    total_amount: amount,
+                                                    type: om_type,
+                                                    purity: purity,
+                                                    rate: rate,
+                                                    created_by: salesman,
+                                                    cash: cash,
+                                                    cheque: cheque,
+                                                    upi: upi,
+                                                    card: card,
+                                                    bank: bank,
+                                                    chequeno: chequeno,
+                                                    upidetails: upidetails,
+                                                    apprcode: apprcode,
+                                                    bankdetails: bankdetails,
+                                                    due: due,
+                                                    productDetails: productDetails,
+                                                    taxamount: taxamount,
+                                                    taxafamount: taxafamount,
+                                                    adv: adv,
+                                                    order_id: order_id,
+                                                    order_date: order_date,
+                                                });
                                             }
-                                        });
-                                    }
-                                    else {
-                                        MessageBox.confirm("Succesfully Updated", {
-                                            actions: ["Print", "Close"],
-                                            emphasizedAction: "Print",
-                                            onClose: function (sAction) {
-                                                if (sAction == "Print") {
-                                                    that.onPrintInvoice({
-                                                        invoice_id: invoice_id,
-                                                        contact_number: buyerDetails.contact_number,
-                                                        customer_name: buyerDetails.name,
-                                                        id_type: buyerDetails.id_type,
-                                                        card_number: buyerDetails.id_value,
-                                                        address: buyerDetails.address,
-                                                        state: buyerDetails.state,
-                                                        invoice_date: invoice_date,
-                                                        gst_number: buyerDetails.gst_number,
-                                                        city_pin: buyerDetails.pincode,
-                                                        notes: addt,
-                                                        discounted_price: discount,
-                                                        cgst: cgst,
-                                                        sgst: sgst,
-                                                        nontax: nontax,
-                                                        total_amount: amount,
-                                                        type: om_type,
-                                                        purity: purity,
-                                                        rate: rate,
-                                                        created_by: salesman,
-                                                        cash: cash,
-                                                        cheque: cheque,
-                                                        upi: upi,
-                                                        card: card,
-                                                        bank: bank,
-                                                        chequeno: chequeno,
-                                                        upidetails: upidetails,
-                                                        apprcode: apprcode,
-                                                        bankdetails: bankdetails,
-                                                        due: due,
-                                                        productDetails: productDetails,
-                                                        taxamount: taxamount,
-                                                        taxafamount: taxafamount,
-                                                        adv: adv,
-                                                        order_id: order_id,
-                                                        order_date: order_date,
-                                                    });
-                                                }
-                                                else {
-                                                    that.oRouter.navTo("InvoiceList", {
-                                                        invoice_id: "null"
-                                                    });
-                                                }
+                                            else {
+                                                that.oRouter.navTo("InvoiceList", {
+                                                    invoice_id: "null"
+                                                });
                                             }
                                         }
-                                        );
                                     }
+                                    );
+
 
                                 },
                                 error: function (request, error) {
@@ -1057,9 +962,7 @@ sap.ui.define(
                 const popupWindow = window.open('', '_blank', 'width=800,height=900');
                 // Render the PopupContent component inside the popup window
                 popupWindow.document.write(printContent);
-                that.oRouter.navTo("InvoiceList", {
-                    invoice_id: "null"
-                });
+                that.oRouter.navTo("InvoiceList");
 
             },
             getOrder: function () {
@@ -1432,9 +1335,7 @@ sap.ui.define(
                                                 const popupWindow = window.open('', '_blank', 'width=800,height=900');
                                                 // Render the PopupContent component inside the popup window
                                                 popupWindow.document.write(printContent);
-                                                that.oRouter.navTo("InvoiceList", {
-                                                    invoice_id: "null"
-                                                });
+                                                that.oRouter.navTo("InvoiceList");
                                             }
 
                                         }

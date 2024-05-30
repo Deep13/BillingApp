@@ -143,7 +143,7 @@ function getPurchase(){
 	die("Connection failed: " . $conn->connect_error);
 	}
 	// Perform query
-	if ($result = $conn -> query("SELECT * FROM purchase")) {
+	if ($result = $conn -> query("SELECT * FROM purchase GROUP BY id ORDER BY STR_TO_DATE(purchase_date, '%Y-%m-%d') DESC")) {
 	if($result->num_rows > 0) {
 	$i = 0;
 	while($row = $result->fetch_assoc()){
@@ -240,7 +240,7 @@ function getInvoices(){
 	die("Connection failed: " . $conn->connect_error);
 	}
 	// Perform query
-	if ($result = $conn -> query("SELECT invoices.*, COUNT(voucher.order_id) AS vouchers FROM invoices LEFT JOIN voucher ON invoices.invoice_id = voucher.order_id GROUP BY invoices.invoice_id ORDER BY invoices.created_at DESC")) {
+	if ($result = $conn -> query("SELECT invoices.*, COUNT(voucher.order_id) AS vouchers FROM invoices LEFT JOIN voucher ON invoices.invoice_id = voucher.order_id GROUP BY invoices.invoice_id ORDER BY STR_TO_DATE(invoice_date, '%Y-%m-%d') DESC")) {
 	if($result->num_rows > 0) {
 	$i = 0;
 	while($row = $result->fetch_assoc()){
@@ -439,10 +439,10 @@ function getOrders()
         die("Connection failed: " . $conn->connect_error);
     }
     // Perform query
-    if ($result = $conn->query("SELECT orders.*, COUNT(voucher.order_id) AS vouchers,SUM(orders.old_gold_amount + COALESCE(voucher.amount, 0)) AS total_combined_amount
+    if ($result = $conn->query("SELECT orders.*, COUNT(voucher.order_id) AS vouchers,SUM(COALESCE(voucher.amount, 0)) AS total_combined_amount
 	FROM orders
 	LEFT JOIN voucher ON orders.order_id = voucher.order_id
-	GROUP BY orders.order_id")) {
+	GROUP BY orders.order_id ORDER BY STR_TO_DATE(order_date, '%Y-%m-%d') DESC")) {
         if ($result->num_rows > 0) {
             $i = 0;
             while ($row = $result->fetch_assoc()) {
@@ -469,6 +469,34 @@ function getVouchers()
     }
     // Perform query
     if ($result = $conn->query("SELECT * from voucher")) {
+        if ($result->num_rows > 0) {
+            $i = 0;
+            while ($row = $result->fetch_assoc()) {
+                $dataArray[$i] = $row;
+                $i = $i + 1;
+            }
+            echo json_encode($dataArray);
+        }
+    }
+	$conn->close();
+
+}
+
+function getVouchersByInvoiceId()
+{
+    $servername = "localhost";
+    $username = "root";
+    $dbname = "Billing_management";
+    // Create connection
+    $conn = new mysqli($servername, $username, "", $dbname);
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+	$obj = json_decode($_POST["data"]);
+    $voucher_id = $obj->voucher_id;
+    // Perform query
+    if ($result = $conn->query("SELECT * from voucher where id=$voucher_id")) {
         if ($result->num_rows > 0) {
             $i = 0;
             while ($row = $result->fetch_assoc()) {
@@ -583,7 +611,7 @@ function getOrderByNumberBuyer()
     $query = "SELECT orders.*, SUM(CAST(voucher.amount AS DECIMAL(10,2))) AS total_combined_amount
 	FROM orders
 	LEFT JOIN voucher ON orders.order_id = voucher.order_id
-	WHERE orders.order_id = ?
+	WHERE orders.order_id = ? AND orders.status = 1
 	GROUP BY orders.order_id ";
 
     if ($stmt = $conn->prepare($query)) {
@@ -850,6 +878,31 @@ if ($result = $conn -> query("SELECT * FROM invoice_details WHERE invoice_id = $
 	$conn->close();
 }
 
+function getInvoicewithId(){
+	$servername = "localhost";
+	$username = "root";
+	$dbname = "Billing_management";
+	// Create connection
+	$conn = new mysqli($servername, $username,"", $dbname);
+	// Check connection
+		if ($conn->connect_error) {
+		die("Connection failed: " . $conn->connect_error);
+		}
+		$obj = json_decode($_POST["data"]);
+		$invoice_id = $obj->invoice_id;
+	if ($result = $conn -> query("SELECT * FROM invoices WHERE invoice_id = $invoice_id")) {
+		if($result->num_rows > 0) {
+		$i = 0;
+		while($row = $result->fetch_assoc()){
+		$dataArray[$i] = $row;
+		$i = $i + 1;
+	}
+		echo json_encode($dataArray);
+	}
+		}
+		$conn->close();
+	}
+
 function getOrderWithVoucher(){
 	$servername = "localhost";
 	$username = "root";
@@ -900,6 +953,8 @@ function getOrderWithVoucher(){
 			$conn->close();
 		}
 
+		
+
 
 function getIdHalueHelp(){
 	$servername = "localhost";
@@ -938,7 +993,7 @@ function getIdHalueHelp(){
 			}
 			$obj = json_decode($_POST["data"]);
 			$order_id = $obj->order_id;
-		if ($result = $conn -> query("SELECT COUNT(*) AS order_exists FROM orders WHERE order_id = '$order_id'")) {
+		if ($result = $conn -> query("SELECT COUNT(*) AS order_exists, status FROM orders WHERE order_id = '$order_id'")) {
 			if($result->num_rows > 0) {
 			$i = 0;
 			while($row = $result->fetch_assoc()){
@@ -1392,7 +1447,6 @@ function insertPurchase()
     $gst_number = $obj->gst_number;
     $city_pin = $obj->city_pin;
     $others = $obj->others;
-   
     $cgst = $obj->cgst;
     $sgst = $obj->sgst;
     $taxamount = $obj->taxamount;
@@ -1588,11 +1642,18 @@ function insertVoucher()
     $upidetails = $obj->upidetails;
     $chequeno = $obj->chequeno;
     $bank_details = $obj->bank_details;
-	
+    $purchase_id = $obj->purchase_id;
 
+	if (isset($obj->invoice_id)) {
+		$invoice_id = $obj->invoice_id;
+	} else {
+		// 'purchase_id' is not provided, you can set it to null or any default value
+		$invoice_id = ""; // or set a default value
+	}
+	
     // Perform query
-    $sql = "INSERT INTO `voucher` (`order_id`,`amount`, `voucher_date`,`rate`,`card`,`cash`,`cheque`,`bank`,`upi`,`oldgold`,`apprcode`,`upidetails`,`chequeno`,`bank_details`) 
-            VALUES ('$order_id','$amount', '$voucher_date','$rate','$card','$cash','$cheque','$bank','$upi','$oldgold','$apprcode','$upidetails','$chequeno','$bank_details')";
+    $sql = "INSERT INTO `voucher` (`order_id`,`amount`, `voucher_date`,`rate`,`card`,`cash`,`cheque`,`bank`,`upi`,`oldgold`,`apprcode`,`upidetails`,`chequeno`,`bank_details`,`purchase_id`,`invoice_id`) 
+            VALUES ('$order_id','$amount', '$voucher_date','$rate','$card','$cash','$cheque','$bank','$upi','$oldgold','$apprcode','$upidetails','$chequeno','$bank_details','$purchase_id','$invoice_id')";
 
     if (mysqli_query($conn, $sql)) {
         $invoiceId = mysqli_insert_id($conn); // Get the last inserted ID
@@ -1638,8 +1699,202 @@ function insertGstAckRecord() {
 }
 
 
-
 // ----------------------------- Update Ornament ---------------------------------------------
+
+function updatePurchase(){
+    $servername = "localhost";
+    $username = "root";
+    $dbname = "Billing_management";
+    
+    // Create connection
+    $conn = new mysqli($servername, $username, "", $dbname);
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    
+    $obj = json_decode($_POST["data"]);
+    
+    $contact_number = $obj->contact_number;
+    $purchase_id = $obj->purchase_id;
+    $customer_name = $obj->customer_name;
+    $id_type = $obj->id_type;
+    $card_number = $obj->card_number;
+    $address = $obj->address;
+    $state = $obj->state;
+    $gst_number = $obj->gst_number;
+    $city_pin = $obj->city_pin;
+    $others = $obj->others;
+    $cgst = $obj->cgst;
+    $sgst = $obj->sgst;
+    $taxamount = $obj->taxamount;
+    $total_amount = $obj->total_amount;
+    $type = $obj->type;
+    $purity = $obj->purity;
+    $rate = $obj->rate;
+	$created_by = $obj->created_by;
+    $cash = $obj->cash;
+    $cheque = $obj->cheque;
+    $adjo = $obj->adjo;
+    $card = $obj->card;
+    $adjp = $obj->adjp;
+	$chequeno = $obj->chequeno;
+    $adjonumber = $obj->adjonumber;
+    $apprcode = $obj->apprcode;
+    $adjpnumber = $obj->adjpnumber;
+
+	$sql = "UPDATE `purchase` SET 
+	`contact_number` = '$contact_number',
+	`customer_name` = '$customer_name',
+	`id_type` = '$id_type',
+	`card_number` = '$card_number',
+	`address` = '$address',
+	`state` = '$state',
+	`gst_number` = '$gst_number',
+	`city_pin` = '$city_pin',
+	`others` = '$others',
+	`cgst` = '$cgst',
+	`sgst` = '$sgst',
+	`taxamount` = '$taxamount',
+	`total_amount` = '$total_amount',
+	`type` = '$type',
+	`purity` = '$purity',
+	`rate` = '$rate',
+	`created_by` = '$created_by',
+	`cash` = '$cash',
+	`cheque` = '$cheque',
+	`adjo` = '$adjo',
+	`card` = '$card',
+	`adjp` = '$adjp',
+	`chequeno` = '$chequeno',
+	`adjonumber` = '$adjonumber',
+	`apprcode` = '$apprcode',
+	`adjpnumber` = '$adjpnumber'
+	WHERE `id` = $purchase_id";
+
+if (mysqli_query($conn, $sql)) {
+$dataArray[0] = 'Update successful';
+echo json_encode($dataArray);
+} else {
+$dataArray[0] = 'Update failed';
+echo json_encode($dataArray);
+}
+}
+
+
+function updatePurchaseDetail()
+{
+    $servername = "localhost";
+    $username = "root";
+    $dbname = "Billing_management";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, "", $dbname);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    $data = json_decode($_POST["data"]);
+
+    $items = $data->data;
+    $purchase_id = $data->purchase_id;
+// Perform query
+$sql = "DELETE FROM `purchase_details` WHERE `purchase_id` = $purchase_id";
+if(mysqli_query($conn,$sql)){
+	foreach ($items as $item) {
+        $ormDesc = $item->orm_desc;
+        $omCode = $item->om_code;
+        $grossWt = $item->gross_wt;
+        $netWt = $item->net_wt;
+        $qty = $item->qty;
+        $amount = $item->amount;
+        // Perform query
+        $sql = "INSERT INTO `purchase_details` 
+                (`purchase_id`,`om_code`, `orm_desc`,`gross_wt`, `net_wt`, `qty`, `amount`) 
+                VALUES ('$purchase_id','$omCode','$ormDesc', '$grossWt', '$netWt',  '$qty', '$amount' )";
+
+        if (!mysqli_query($conn, $sql)) {
+            $dataArray[0] = 'Update failed';
+            echo json_encode($dataArray);
+            return;
+        }
+    }
+
+    $dataArray[0] = 'Update successful';
+    echo json_encode($dataArray);
+}
+else{
+$dataArray[0] = 'Delete failed';
+echo json_encode($dataArray);
+}
+   // Close the database connection
+	$conn->close();
+
+}
+
+
+function updateVoucher() {
+	$servername = "localhost";
+	$username = "root";
+	$password = ""; // Update this with your database password
+	$dbname = "Billing_management";
+	
+	// Create connection
+	$conn = new mysqli($servername, $username, $password, $dbname);
+	
+	// Check connection
+	if ($conn->connect_error) {
+		die("Connection failed: " . $conn->connect_error);
+	}
+	
+	// Get data from POST request
+	$obj = json_decode($_POST["data"]);
+	$id = $obj->id;
+	$amount = $obj->amount;
+	$rate = $obj->rate;
+	$card = $obj->card;
+	$bank = $obj->bank;
+	$cheque = $obj->cheque;
+	$cash = $obj->cash;
+	$upi = $obj->upi;
+	$oldgold = $obj->oldgold;
+	$bank_details = $obj->bank_details;
+	$chequeno = $obj->chequeno;
+	$upidetails = $obj->upidetails;
+	$apprcode = $obj->apprcode;
+	$purchase_id = $obj->purchase_id;
+	
+	// Perform the update query
+	$sql = "UPDATE `voucher` SET 
+			`amount` = '$amount',
+			`rate` = '$rate',
+			`card` = '$card',
+			`bank` = '$bank',
+			`cheque` = '$cheque',
+			`cash` = '$cash',
+			`upi` = '$upi',
+			`oldgold` = '$oldgold',
+			`bank_details` = '$bank_details',
+			`chequeno` = '$chequeno',
+			`upidetails` = '$upidetails',
+			`purchase_id` = '$purchase_id',
+			`apprcode` = '$apprcode'
+			WHERE `id` = $id";
+	
+	if (mysqli_query($conn, $sql)) {
+		$dataArray[0] = 'Update successful';
+		echo json_encode($dataArray);
+	} else {
+		$dataArray[0] = 'Update failed';
+		echo json_encode($dataArray);
+	}
+	
+	// Close the database connection
+	$conn->close();
+	}
 
 	function updateStock() {
 	$servername = "localhost";
@@ -1934,6 +2189,231 @@ function updateIdentificationType(){
 	}
 	$conn->close();
 }
+
+function updateInvoice(){
+	$servername = "localhost";
+	$username = "root";
+	$dbname = "Billing_management";
+	// Create connection
+	$conn = new mysqli($servername, $username,"", $dbname);
+	// Check connection
+	if ($conn->connect_error) {
+	die("Connection failed: " . $conn->connect_error);
+	}
+	$obj = json_decode($_POST["data"]);
+	$contact_number = $obj->contact_number;
+	$invoice_id = $obj->invoice_id;
+    $customer_name = $obj->customer_name;
+    $id_type = $obj->id_type;
+    $card_number = $obj->card_number;
+    $address = $obj->address;
+    $state = $obj->state;
+    $gst_number = $obj->gst_number;
+    $city_pin = $obj->city_pin;
+    $notes = $obj->notes;
+    $discounted_price = $obj->discounted_price;
+    $cgst = $obj->cgst;
+    $sgst = $obj->sgst;
+    $nontax = $obj->nontax;
+    $taxamount = $obj->taxamount;
+    $taxafamount = $obj->taxafamount;
+    $adv = $obj->adv;
+    $total_amount = $obj->total_amount;
+    $type = $obj->type;
+    $purity = $obj->purity;
+    $rate = $obj->rate;
+	$created_by = $obj->created_by;
+    $cash = $obj->cash;
+    $cheque = $obj->cheque;
+    $upi = $obj->upi;
+    $card = $obj->card;
+    $bank = $obj->bank;
+	$chequeno = $obj->chequeno;
+    $upidetails = $obj->upidetails;
+    $apprcode = $obj->apprcode;
+    $bankdetails = $obj->bankdetails;
+    $due = $obj->due;
+    $old_gold_amount = $obj->old_gold_amount;
+    $purchase_id = $obj->purchase_id;
+	// Perform query
+	$sql = "UPDATE `invoices` SET 
+	`contact_number` = '$contact_number', 
+	`customer_name` = '$customer_name', 
+	`id_type` = '$id_type', 
+	`card_number` = '$card_number', 
+	`address` = '$address', 
+	`state` = '$state', 
+	`gst_number` = '$gst_number', 
+	`city_pin` = '$city_pin', 
+	`notes` = '$notes', 
+	`discounted_price` = '$discounted_price', 
+	`cgst` = '$cgst', 
+	`sgst` = '$sgst', 
+	`nontax` = '$nontax', 
+	`taxamount` = '$taxamount', 
+	`taxafamount` = '$taxafamount', 
+	`adv` = '$adv', 
+	`total_amount` = '$total_amount', 
+	`type` = '$type', 
+	`purity` = '$purity', 
+	`rate` = '$rate', 
+	`created_by` = '$created_by', 
+	`cash` = '$cash', 
+	`cheque` = '$cheque', 
+	`upi` = '$upi', 
+	`card` = '$card', 
+	`bank` = '$bank', 
+	`chequeno` = '$chequeno', 
+	`upidetails` = '$upidetails', 
+	`apprcode` = '$apprcode', 
+	`bankdetails` = '$bankdetails', 
+	`due` = '$due', 
+	`old_gold_amount` = '$old_gold_amount', 
+	`purchase_id` = '$purchase_id'
+	
+	WHERE `invoices`.`invoice_id` = $invoice_id";
+	if(mysqli_query($conn,$sql)){
+	$dataArray[0] = 'Update successful';
+	echo json_encode($dataArray);
+	}
+	else{
+	$dataArray[0] = 'Update failed';
+	echo json_encode($dataArray);
+	}
+	$conn->close();
+}
+
+function updateInvoiceDetails(){
+	$servername = "localhost";
+	$username = "root";
+	$dbname = "Billing_management";
+	// Create connection
+	$conn = new mysqli($servername, $username,"", $dbname);
+	// Check connection
+	if ($conn->connect_error) {
+	die("Connection failed: " . $conn->connect_error);
+	}
+	$obj = json_decode($_POST["data"]);
+	$items = $obj->data;
+    $invoiceId = $obj->invoice_id;
+
+	// Perform query
+	$sql = "DELETE FROM `invoice_details` WHERE `invoice_id` = $invoiceId";
+	if(mysqli_query($conn,$sql)){
+		
+		foreach ($items as $item) {
+			$ormDesc = $item->orm_desc;
+			$omCode = $item->om_code;
+			$grossWt = $item->gross_wt;
+			$netWt = $item->net_wt;
+			$stoneWt = $item->stone_wt;
+			$st_value = $item->st_value;
+			$qty = $item->qty;
+			$amount = $item->amount;
+			$making = $item->making;
+			$value = $item->value;
+			$hm_charge = $item->hm_charge;
+			$huid = $item->huid;
+			$HSN = $item->HSN;
+	
+			// Perform query
+			$sql = "INSERT INTO `invoice_details` 
+					(`invoice_id`,`om_code`, `orm_desc`,`gross_wt`, `net_wt`, `stone_wt`, `st_value`, `qty`, `amount`, `making`, `value`, `hm_charge`, `huid`,`HSN`) 
+					VALUES ('$invoiceId','$omCode','$ormDesc', '$grossWt', '$netWt', '$stoneWt', '$st_value', '$qty', '$amount', '$making', '$value', '$hm_charge', '$huid','$HSN' )";
+	
+			if (!mysqli_query($conn, $sql)) {
+				$dataArray[0] = 'Insertion failed';
+				echo json_encode($dataArray);
+				return;
+			}
+		}
+	}
+	else{
+	$dataArray[0] = 'delete failed';
+	echo json_encode($dataArray);
+	}
+	
+	$conn->close();
+}
+
+
+function updateOrders(){
+	$servername = "localhost";
+	$username = "root";
+	$dbname = "Billing_management";
+	// Create connection
+	$conn = new mysqli($servername, $username,"", $dbname);
+	// Check connection
+	if ($conn->connect_error) {
+	die("Connection failed: " . $conn->connect_error);
+	}
+	$obj = json_decode($_POST["data"]);
+	$address = $obj->address;
+	$contact_number = $obj->contact_number;
+	$gst_number = $obj->gst_number;
+	$id = $obj->id;
+	$id_type = $obj->id_type;
+	$id_value = $obj->id_value;
+	$name = $obj->name;
+	$pincode = $obj->pincode;
+	$state = $obj->state;
+	$state_code = $obj->state_code;
+	$type = $obj->type;
+	$purity = $obj->purity;
+	$rate = $obj->rate;
+	$created_by = $obj->created_by;
+	$order_id = $obj->order_id;
+	// Perform query
+	$sql = "UPDATE `orders` SET 
+	`address` = '$address',
+	`contact_number` = '$contact_number',
+	`gst_number` = '$gst_number',
+	`id` = '$id',
+	`id_type` = '$id_type',
+	`id_value` = '$id_value',
+	`name` = '$name',
+	`pincode` = '$pincode',
+	`state` = '$state',
+	`state_code` = '$state_code',
+	`type` = '$type',
+	`purity` = '$purity',
+	`rate` = '$rate',
+	`created_by` = '$created_by'
+	WHERE `orders`.`order_id` = $order_id";
+	if(mysqli_query($conn,$sql)){
+	$dataArray[0] = 'Update successful';
+	echo json_encode($dataArray);
+	}
+	else{
+	$dataArray[0] = 'Update failed';
+	echo json_encode($dataArray);
+	}
+	$conn->close();
+}
+function updateOrderStatus(){
+	$servername = "localhost";
+	$username = "root";
+	$dbname = "Billing_management";
+	// Create connection
+	$conn = new mysqli($servername, $username,"", $dbname);
+	// Check connection
+	if ($conn->connect_error) {
+	die("Connection failed: " . $conn->connect_error);
+	}
+	$obj = json_decode($_POST["data"]);
+	$order_id = $obj->order_id;
+	// Perform query
+	$sql = "UPDATE `orders` SET `status` = 0 WHERE `order_id` = $order_id";
+	if(mysqli_query($conn,$sql)){
+	$dataArray[0] = 'Update successful';
+	echo json_encode($dataArray);
+	}
+	else{
+	$dataArray[0] = 'Update failed';
+	echo json_encode($dataArray);
+	}
+	$conn->close();
+}
 function updateCustomer()
 {
     $servername = "localhost";
@@ -2025,16 +2505,26 @@ function updateSold(){
 	die("Connection failed: " . $conn->connect_error);
 	}
 	$obj = json_decode($_POST["data"]);
-	$id = $obj->id;
-	// Perform query
-	$sql = "UPDATE `stocks` SET `sold` = 1 WHERE `stocks`.`om_code` = '$id'";
-	if(mysqli_query($conn,$sql)){
-	$dataArray[0] = 'Update successful';
-	echo json_encode($dataArray);
-	}
-	else{
-		echo "Error updating stocks: " . mysqli_error($conn);
-	}
+
+
+
+	$items = $obj->data;
+
+    foreach ($items as $item) {
+        $omCode = $item->om_code;
+
+        // Perform query
+        $sql = "UPDATE `stocks` SET `sold` = 1 WHERE `stocks`.`om_code` = '$omCode'";
+
+        if (!mysqli_query($conn, $sql)) {
+            $dataArray[0] = `Update failed for $omCode` ;
+            echo json_encode($dataArray);
+            return;
+        }
+    }
+
+    $dataArray[0] = 'Update successful';
+    echo json_encode($dataArray);
 	$conn->close();
 }
 	// ----------------------------------------Generate Invoice ----------------------------------------------

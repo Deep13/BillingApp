@@ -61,7 +61,7 @@
                     </Column>
                 </columns>
                 <items>
-                    <ColumnListItem>
+                    <ColumnListItem type="Active" press="onEdit">
                         <cells>
                             <Text text="{id}" />
                             <Text text="{voucher_date}" />

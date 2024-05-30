@@ -186,7 +186,8 @@
                                             </Input>
                                             <Input value="{Products>qty}" />
                                             <Input value="{Products>gross_wt}" />
-                                            <Input value="{Products>net_wt}" submit="calValue" />
+                                            <Input value="{Products>net_wt}" liveChange="calValue"
+                                            />
                                             <Input value="{Products>amount}" />
                                             <Button icon="sap-icon://delete" type="Reject"
                                                 press="onPressRemove" />
@@ -217,10 +218,11 @@
                                         <Title level="H1" text="Adj Order: " width="120px" />
                                         <Input id="adjo" liveChange="adjustCheque" />
                                         <Input id="adjonumber" class="sapUiSmallMarginBegin"
-                                            placeholder="order number" liveChange="checkValidStep" />
+                                            placeholder="Order number" liveChange="onTabPress"
+                                            submit="checkOrderValid" />
                                     </HBox>
                                     <HBox alignItems="Center">
-                                        <Title level="H1" text="Adj Purchase: " width="120px" />
+                                        <Title level="H1" text="Adj Invoice: " width="120px" />
                                         <Input id="adjp" submit="getInvoiceNumber"
                                             liveChange="adjustCheque" />
                                         <Input id="adjpnumber" class="sapUiSmallMarginBegin"
@@ -439,21 +441,24 @@
                                     <ColumnListItem>
                                         <cells>
                                             <Input value="{InvoiceModel>om_code}"
-                                                submit='onInputCode' />
+                                                submit='onInputCode' liveChange="onTabPress" />
                                             <Input value="{InvoiceModel>orm_desc}" />
                                             <Input value="{InvoiceModel>qty}" />
                                             <Input value="{InvoiceModel>gross_wt}" />
                                             <Input value="{InvoiceModel>net_wt}"
-                                                submit="calValueInvoice" />
+                                                submit="calValueInvoice" liveChange="onTabPress" />
                                             <Input value="{InvoiceModel>value}" editable="false" />
                                             <Input value="{InvoiceModel>making}"
+                                                liveChange="onTabPress"
                                                 submit="calValueInvoice" />
                                             <Input value="{InvoiceModel>stone_wt}" />
                                             <Input value="{InvoiceModel>st_val}" />
                                             <Input value="{InvoiceModel>hmcharge}"
+                                                liveChange="onTabPress"
                                                 submit="calValueInvoice" />
                                             <Input value="{InvoiceModel>amount}" />
-                                            <Input value="{InvoiceModel>huid}" submit="onAddInvoice" />
+                                            <Input value="{InvoiceModel>huid}"
+                                                liveChange="onTabPress" submit="onAddInvoice" />
                                             <Button icon="sap-icon://delete" type="Reject"
                                                 press="onPressRemoveInvoice" />
                                         </cells>

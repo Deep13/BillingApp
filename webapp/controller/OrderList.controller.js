@@ -243,6 +243,7 @@ sap.ui.define(
                                                 upidetails: sText.upidetails,
                                                 oldgold: sText.oldgold,
                                                 voucher_date: order_date,
+                                                purchase_id: ""
                                             }),
                                         },
                                         success: function (dataClient) {
@@ -391,7 +392,7 @@ sap.ui.define(
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
@@ -601,7 +602,7 @@ html2pdf(staticContent,{ filename: "Advance-voucher:"+${data.order_id} });
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-            <title>Manikanchan Jewellery House</title>
+            <title>Jewellery House</title>
         
             <!-- Bootstrap CSS -->
             <link rel="stylesheet" href="./assets/css/bootstrap.min.css">

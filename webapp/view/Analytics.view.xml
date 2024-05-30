@@ -1,0 +1,18 @@
+<mvc:View
+    controllerName="Billing.Billing.controller.Analytics"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:custom="Billing.Billing.model">
+    <Page title="Jewelry Shop Analysis">
+        <content>
+            <custom:ChartJSChart id="salesChart" chartData="{path: '/salesData'}" width="400px"
+                height="200px" />
+            <custom:ChartJSChart id="revenueChart" chartData="{path: '/revenueData'}" width="400px"
+                height="200px" />
+            <custom:ChartJSChart id="topProductsChart" chartData="{path: '/topProductsData'}"
+                width="400px" height="200px" />
+            <custom:ChartJSChart id="inventoryChart" chartData="{path: '/inventoryData'}"
+                width="400px" height="200px" />
+        </content>
+    </Page>
+</mvc:View>

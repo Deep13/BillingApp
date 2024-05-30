@@ -135,6 +135,9 @@ sap.ui.define(
           purchase_id: "null"
         });
       },
+      onPressAnalytics: function () {
+        this.oRouter.navTo("Analytics");
+      },
       gotToPage: function (oEvent) {
         console.log(oEvent);
         var selected = oEvent.getParameter("selectedRow").getBindingContext("SearchValueHelp").getObject();

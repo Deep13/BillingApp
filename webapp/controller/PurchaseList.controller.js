@@ -18,6 +18,12 @@ sap.ui.define(
 
 
             },
+            onEditPurchase: function (oEvent) {
+                var id = oEvent.getSource().getBindingContext().getObject().id;
+                this.oRouter.navTo("Purchase", {
+                    purchase_id: id
+                });
+            },
             _handleRouteMatched: function (oEvent) {
                 var data = this.getUserLog();
                 if (!data) {
@@ -145,7 +151,7 @@ sap.ui.define(
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-                    <title>Manikanchan Jewellery House</title>
+                    <title>Jewellery House</title>
                 
                     <!-- Bootstrap CSS -->
                     <link rel="stylesheet" href="./assets/css/bootstrap.min.css">
